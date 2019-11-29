@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Local testing
+local_test/
+
+# Python distribution files
+maintainer/dist_build/
+
+# Vim plugins
+.vim
+.syntastic_*_config
+
+# Documentation build files
+docs/python/build/
