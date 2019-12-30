@@ -15,7 +15,7 @@ class ProteinEngineering:
         self.work_dir = os.getcwd()
         self.db_file = database
 
-        self.platform_name = "simple"
+        self.platform = "simple"
 
         self.variant_name = "mutation"
         self.variant_parameters = {}
@@ -49,7 +49,7 @@ class ProteinEngineering:
 
         print("Engineer: platform factory")
         platform_factory = PlatformFactory()
-        platform_factory.name = self.platform_name
+        platform_factory.name = self.platform
         platform_factory.pipeline = pipeline
         platform = platform_factory.make()
 
