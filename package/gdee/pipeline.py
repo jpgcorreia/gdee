@@ -2,7 +2,6 @@
 """
 
 
-from .database import Database
 from .variant import VariantBuilderFactory
 from .modeling import ModelBuilderFactory
 from .evaluator import EvaluatorFactory
@@ -30,11 +29,10 @@ class PipelineFactory:
     def make(self):
         pipeline = Pipeline()
 
-        pipeline.database = Database(self.db_name)
-
         variant_factory = VariantBuilderFactory()
         variant_factory.name = self.variant_name
         variant_factory.parameters = self.variant_parameters
+        variant_factory.db_name = self.db_name
         pipeline.variant_builder = variant_factory.make()
 
         model_factory = ModelBuilderFactory()
@@ -80,4 +78,4 @@ class Pipeline:
         return -job_data
 
     def save_results(self, results):
-        print("Pipeline: Saving results:", results)
+        self._variant_builder.save_results(results)
