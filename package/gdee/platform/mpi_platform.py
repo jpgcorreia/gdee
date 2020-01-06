@@ -46,9 +46,6 @@ class MPIManager:
         self.not_saved = 0
 
     def run(self):
-        # Run non-parallel tasks
-        self.pipeline.run_initial()
-
         while self.alive or self.not_saved:
             message = self.comm.recv(source=MPI.ANY_SOURCE, status=self.status)
 
@@ -60,14 +57,15 @@ class MPIManager:
                 self.not_saved -= 1
 
     def send_task(self):
-        if self.pipeline.available():
-            task = self.pipeline.next_job()
-            message = Message(RequestType.run_task, task)
-            self.not_saved += 1
+        task = self.pipeline.next_job()
 
-        else:
+        if task is None:
             message = Message(RequestType.terminate)
             self.alive -= 1
+
+        else:
+            message = Message(RequestType.run_task, task)
+            self.not_saved += 1
 
         runner = self.status.Get_source()
         self.comm.send(message, dest=runner)

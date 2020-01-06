@@ -38,7 +38,7 @@ class PipelineFactory:
         variant_factory = VariantBuilderFactory()
         variant_factory.name = self.variant_name
         variant_factory.parameters = self.variant_parameters
-        pipeline.add_initial_task(variant_factory.make())
+        pipeline.variant_builder = variant_factory.make()
 
         print("Making a model builder")
         model_factory = ModelBuilderFactory()
@@ -64,27 +64,23 @@ class PipelineFactory:
 class Pipeline:
     def __init__(self):
         self.database = None
-        self.initial_task_list = []
+        self._variant_builder = None
         self.task_list = []
-        self._job_list = []
 
-    def add_initial_task(self, task):
-        print("Added task to initial list")
-        self.initial_task_list.append(task)
+    @property
+    def variant_builder(self):
+        return self._variant_builder
+
+    @variant_builder.setter
+    def variant_builder(self, obj):
+        self._variant_builder = obj
 
     def add_task(self, task):
         print("Added task to list")
         self.task_list.append(task)
 
-    def available(self):
-        return bool(len(self._job_list))
-
     def next_job(self):
-        return self._job_list.pop()
-
-    def run_initial(self):
-        print("Pipeline: Running initial")
-        self._job_list += [1, 2, 3, 4]
+        return self.variant_builder.next_job()
 
     def run_pipeline(self, job_data):
         print("Pipeline: Running job:", job_data)
