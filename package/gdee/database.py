@@ -6,7 +6,6 @@ class Database:
     def __init__(self, filename):
         self.filename = filename
         self._conn = None
-        print("Database object created") # TODO
 
     def connect(self):
         print("Database initialized on file", self.filename) # TODO

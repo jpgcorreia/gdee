@@ -28,19 +28,15 @@ class PipelineFactory:
         self.ligand_box_center = None
 
     def make(self):
-        print("Making a pipeline")
         pipeline = Pipeline()
 
-        print("Making a database")
         pipeline.database = Database(self.db_name)
 
-        print("Making a variant")
         variant_factory = VariantBuilderFactory()
         variant_factory.name = self.variant_name
         variant_factory.parameters = self.variant_parameters
         pipeline.variant_builder = variant_factory.make()
 
-        print("Making a model builder")
         model_factory = ModelBuilderFactory()
         model_factory.name = self.model_name
         model_factory.work_dir = self.work_dir
@@ -48,7 +44,6 @@ class PipelineFactory:
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
 
-        print("Making an evaluator")
         evaluator_factory = EvaluatorFactory()
         evaluator_factory.name = self.evaluator_name
         evaluator_factory.work_dir = self.work_dir
@@ -76,14 +71,12 @@ class Pipeline:
         self._variant_builder = obj
 
     def add_task(self, task):
-        print("Added task to list")
         self.task_list.append(task)
 
     def next_job(self):
         return self.variant_builder.next_job()
 
     def run_pipeline(self, job_data):
-        print("Pipeline: Running job:", job_data)
         return -job_data
 
     def save_results(self, results):

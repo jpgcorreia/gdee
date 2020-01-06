@@ -15,7 +15,6 @@ class PlatformFactory:
         self.pipeline = None
 
     def make(self):
-        print("Choosing a platform")
         if self.name == "simple":
             return SimplePlatform(self.pipeline)
 

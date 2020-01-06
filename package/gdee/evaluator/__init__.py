@@ -27,7 +27,6 @@ class EvaluatorFactory:
         if self.box_center is None or len(self.box_center) != 3:
             raise RuntimeError("Invalid searching box center.")
 
-        print("Making an EvaluatorParameters")
         params = EvaluatorParameters(
             self.work_dir,
             self.pdb_file,

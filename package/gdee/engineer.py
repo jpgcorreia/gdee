@@ -31,7 +31,6 @@ class ProteinEngineering:
         self.ligand_box_center = None
 
     def run(self):
-        print("Engineer: Creating Pipeline factory")
         pipeline_factory = PipelineFactory()
         pipeline_factory.work_dir = self.work_dir
         pipeline_factory.db_file = self.db_file
@@ -47,11 +46,9 @@ class ProteinEngineering:
         pipeline_factory.ligand_box_center = self.ligand_box_center
         pipeline = pipeline_factory.make()
 
-        print("Engineer: platform factory")
         platform_factory = PlatformFactory()
         platform_factory.name = self.platform
         platform_factory.pipeline = pipeline
         platform = platform_factory.make()
 
-        print("Engineer: running")
         platform.run()
