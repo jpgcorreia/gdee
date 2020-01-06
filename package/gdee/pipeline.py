@@ -2,9 +2,9 @@
 """
 
 
-from .variant import VariantBuilderFactory
-from .modeling import ModelBuilderFactory
-from .evaluator import EvaluatorFactory
+from gdee.variant import VariantBuilderFactory
+from gdee.modeling import ModelBuilderFactory
+from gdee.evaluator import EvaluatorFactory
 import os
 
 

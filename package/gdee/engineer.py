@@ -2,8 +2,8 @@
 """
 
 
-from .pipeline import PipelineFactory
-from .platform import PlatformFactory
+from gdee.pipeline import PipelineFactory
+from gdee.platform import PlatformFactory
 import os
 
 
