@@ -1,0 +1,123 @@
+"""
+"""
+
+
+import numpy as np
+import random
+
+
+__all__ = ["three_to_one", "SEQ_3_1", "MatrixMutation", "Blosum62Mutation"]
+
+
+SEQ_1_3 = {"A": "ALA", "C": "CYS", "D": "ASP", "E": "GLU", "F": "PHE", "G": "GLY", "H": "HIS", "I": "ILE", "K": "LYS", "L": "LEU", "M": "MET", "N": "ASN", "P": "PRO", "Q": "GLN", "R": "ARG", "S": "SER", "T": "THR", "V": "VAL", "W": "TRP", "Y": "TYR"}
+
+
+SEQ_3_1 = {"ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C", "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V"}
+
+
+BLOSUM_COLUMNS = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+
+
+def three_to_one(aa):
+    if len(aa) == 1:
+        return aa
+
+    elif len(aa) == 3:
+        return SEQ_3_1.get(aa, "U")
+
+    else:
+        raise ValueError("Unknown aminoacids notation")
+
+
+def one_to_three(aa):
+    if len(aa) == 3:
+        return aa
+
+    elif len(aa) == 1:
+        return SEQ_1_3.get(aa, "U")
+
+    else:
+        raise ValueError("Unknown aminoacids notation")
+
+
+def non_negative(array):
+    return array + 1 - np.min(array)
+
+
+class MatrixMutation:
+    def __init__(self, aminoacids, weights, inverted=False):
+        self._aa = []
+        self._weights = {}
+        self._set_data(aminoacids, weights, inverted)
+
+    def __getitem__(self, key):
+        return self._weights[key]
+
+    def _set_data(self, aminoacids, weights, inverted):
+        self._aa = np.array([three_to_one(code) for code in aminoacids])
+
+        weights = np.array(weights, "float64")
+        shape = weights.shape
+
+        if len(self._aa) != shape[0] or len(self._aa) != shape[1]:
+            raise ValueError("Incompatible shapes between weights matrix and amino acids specification")
+
+        # Store normalized individual weights
+        for idx, code in enumerate(self._aa):
+            aa_weights = weights[idx, :]
+
+            if inverted:
+                self._weights[code] = [
+                    non_negative(np.max(aa_weights) - aa_weights),
+                    non_negative(aa_weights)
+                ]
+
+            else:
+                self._weights[code] = [
+                    non_negative(aa_weights),
+                    non_negative(np.max(aa_weights) - aa_weights)
+                ]
+
+    def mutate(self, aa, invert=False):
+        wild_aa = three_to_one(aa)
+        if invert:
+            weights = self._weights[wild_aa][1]
+        else:
+            weights = self._weights[wild_aa][0]
+
+        return random.choices(self._aa, weights, k=1)[0]
+
+
+class Blosum62Mutation(MatrixMutation):
+    def __init__(self):
+        # Include only usual amino acids
+        super().__init__(BLOSUM62_AA[:-4], BLOSUM62[:-4, :-4], True)
+
+
+BLOSUM62_AA ="A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "B", "Z", "X", "*"
+
+
+BLOSUM62 = np.array([[ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1, 0, -3, -2,  0, -2, -1,  0, -4],
+[-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3, -1,  0, -1, -4],
+[-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1, 0, -4, -2, -3,  3,  0, -1, -4],
+[-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3,  4,  1, -1, -4],
+[ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, -3, -3, -2, -4],
+[-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2,  0,  3, -1, -4],
+[-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1, -4],
+[ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3, -1, -2, -1, -4],
+[-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3,  0,  0, -1, -4],
+[-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3, -3, -3, -1, -4],
+[-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1, -4, -3, -1, -4],
+[-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2,  0,  1, -1, -4],
+[-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1, -3, -1, -1, -4],
+[-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1, -3, -3, -1, -4],
+[-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2, -2, -1, -2, -4],
+[ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4, 1, -3, -2, -2,  0,  0,  0, -4],
+[ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1, 5, -2, -2,  0, -1, -1,  0, -4],
+[-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3, -4, -3, -2, -4],
+[-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1, -3, -2, -1, -4],
+[ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2, 0, -3, -1,  4, -3, -2, -1, -4],
+[-2, -1,  3,  4, -3,  0,  1, -1,  0, -3, -4,  0, -3, -3, -2,  0, -1, -4, -3, -3,  4,  1, -1, -4],
+[-1,  0,  0,  1, -3,  3,  4, -2,  0, -3, -3,  1, -1, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1, -4],
+[ 0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,  0, 0, -2, -1, -1, -1, -1, -1, -4],
+[-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4,  1]], dtype="float64")
