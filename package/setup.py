@@ -35,5 +35,5 @@ setup(
     package_dir = {"gdee": "gdee"},
     ext_package = "gdee",
     # ext_modules = extensions,
-    install_requires = ["numpy", "mdanalysis", "mpi4py"],
+    requires = ["numpy (>=1.14)", "mdanalysis (>=0.20)", "mpi4py (>=3.0)"],
 )
