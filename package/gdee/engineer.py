@@ -21,7 +21,7 @@ class ProteinEngineering:
         self.variant_parameters = {}
 
         self.model_name = "modeller"
-        self.model_pdb = None
+        self.pdb = None
         self.model_parameters = {}
 
         self.evaluator_name = "vina"
@@ -37,7 +37,7 @@ class ProteinEngineering:
         pipeline_factory.variant_name = self.variant_name
         pipeline_factory.variant_parameters = self.variant_parameters
         pipeline_factory.model_name = self.model_name
-        pipeline_factory.model_pdb = self.model_pdb
+        pipeline_factory.pdb = self.pdb
         pipeline_factory.model_parameters = self.model_parameters
         pipeline_factory.evaluator_name = self.evaluator_name
         pipeline_factory.evaluator_parameters = self.evaluator_parameters

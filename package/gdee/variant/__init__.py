@@ -14,10 +14,13 @@ class VariantBuilderFactory:
     def __init__(self):
         self.name = None
         self.db_name = ""
+        self.pdb_file = None
         self.parameters = {}
 
     def make(self):
         database = Database(self.db_name)
+        if "pdb" not in self.parameters:
+            self.parameters["pdb"] = self.pdb_file
 
         if self.name == "blast":
             return BlastBuilder(self.parameters, database)

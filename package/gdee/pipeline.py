@@ -18,7 +18,7 @@ class PipelineFactory:
         self.variant_name = None
         self.variant_parameters = None
         self.model_name = None
-        self.model_pdb = None
+        self.pdb = None
         self.model_parameters = None
         self.evaluator_name = None
         self.evaluator_parameters = None
@@ -33,12 +33,13 @@ class PipelineFactory:
         variant_factory.name = self.variant_name
         variant_factory.parameters = self.variant_parameters
         variant_factory.db_name = self.db_name
+        variant_factory.pdb_file = self.pdb
         pipeline.variant_builder = variant_factory.make()
 
         model_factory = ModelBuilderFactory()
         model_factory.name = self.model_name
         model_factory.work_dir = self.work_dir
-        model_factory.pdb_file = self.model_pdb
+        model_factory.pdb_file = self.pdb
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
 

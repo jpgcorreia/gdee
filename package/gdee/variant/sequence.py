@@ -3,6 +3,9 @@
 
 
 import numpy as np
+import MDAnalysis as mda
+import os
+import copy
 import random
 
 
@@ -42,6 +45,120 @@ def one_to_three(aa):
 
 def non_negative(array):
     return array + 1 - np.min(array)
+
+
+class SeqPos:
+    def __init__(self, index, resid, resname=None):
+        self.index = index
+        self.resid = int(resid)
+        self._resname = "gap"
+        self._gap = True
+        self._code = "-"
+
+        if resname is not None:
+            self.resname = resname
+
+    def __repr__(self):
+        return "SeqPos(index={}, resid={}, resname='{}')".format(self.index, self.resid, self.resname)
+
+    def __str__(self):
+        return self._code
+
+    @property
+    def code(self):
+        return self._code
+
+    @property
+    def is_gap(self):
+        return self._gap
+
+    @property
+    def resname(self):
+        return self._resname
+
+    @resname.setter
+    def resname(self, value):
+        self._resname = str(value)
+
+        if value == "gap":
+            self._code = "-"
+            self._gap = True
+
+        else:
+            self._code = three_to_one(value)
+            self._gap = False
+
+
+class ChainSeq(list):
+    def __init__(self, code, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.code = code
+
+    def __repr__(self):
+        if len(self) > 13:
+            sequence = "".join(map(str, self[:5]))
+            sequence += "..."
+            sequence += "".join(map(str, self[-5:]))
+        else:
+            sequence = "".join(map(str, self))
+
+        return "<ChainSeq '{}' with sequence '{}'>".format(self.code, sequence)
+
+    def __str__(self):
+        return "".join(map(str, self))
+
+
+class ProtSeq:
+    def __init__(self, name, input_file=None):
+        self.name = name
+        self.input_file = input_file
+        self._chains = []
+        self._chain_ids = {}
+
+        if input_file is not None:
+            ext = os.path.splitext(input_file)[1].lower()
+            if ext == ".pdb":
+                self._init_from_pdb()
+
+            elif ext == ".fasta":
+                self._init_from_fasta()
+
+            else:
+                raise RuntimeError("Unknown file type")
+
+    def __repr__(self):
+        return "<ProtSeq object '{}' with {} chains>".format(self.name, len(self._chains))
+
+    def __getitem__(self, key):
+        try:
+            return self._chains[key]
+        except TypeError:
+            pass
+
+        return self._chain_ids[key]
+
+    def _init_from_fasta(self):
+        raise NotImplementedError("This method should be implemented")
+
+    def _init_from_pdb(self):
+        pdb = mda.Universe(self.input_file)
+        protein = pdb.select_atoms("protein")
+
+        seq_idx = 0
+        for segment in protein.segments:
+            chain = ChainSeq(segment.segid)
+            self._chains.append(chain)
+            self._chain_ids[segment.segid] = chain
+
+            for res in (segment.atoms & protein).residues:
+                chain.append(SeqPos(seq_idx, res.resid, res.resname))
+                seq_idx += 1
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def keys(self):
+        return self._chain_ids.keys()
 
 
 class MatrixMutation:
