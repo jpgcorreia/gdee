@@ -14,41 +14,29 @@ __all__ = ["PipelineFactory"]
 class PipelineFactory:
     def __init__(self):
         self.work_dir = None
-        self.db_name = None
-        self.variant_name = None
-        self.variant_parameters = None
-        self.model_name = None
         self.pdb = None
-        self.model_parameters = None
-        self.evaluator_name = None
-        self.evaluator_parameters = None
-        self.ligand_pdb = None
-        self.ligand_box = None
-        self.ligand_box_center = None
+        self.db_name = None
+        self.variant_parameters = {}
+        self.model_parameters = {}
+        self.evaluator_parameters = {}
 
     def make(self):
         pipeline = Pipeline()
 
         variant_factory = VariantBuilderFactory()
-        variant_factory.name = self.variant_name
+        self.variant_parameters["db_name"] = self.db_name
+        self.variant_parameters["pdb_file"] = self.pdb
         variant_factory.parameters = self.variant_parameters
-        variant_factory.db_name = self.db_name
-        variant_factory.pdb_file = self.pdb
         pipeline.variant_builder = variant_factory.make()
 
         model_factory = ModelBuilderFactory()
-        model_factory.name = self.model_name
-        model_factory.work_dir = self.work_dir
-        model_factory.pdb_file = self.pdb
+        self.model_parameters["work_dir"] = self.work_dir
+        self.model_parameters["pdb_file"] = self.pdb
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
 
         evaluator_factory = EvaluatorFactory()
-        evaluator_factory.name = self.evaluator_name
-        evaluator_factory.work_dir = self.work_dir
-        evaluator_factory.pdb_file = self.ligand_pdb
-        evaluator_factory.box = self.ligand_box
-        evaluator_factory.box_center = self.ligand_box_center
+        self.evaluator_parameters["work_dir"] = self.work_dir
         evaluator_factory.parameters = self.evaluator_parameters
         pipeline.add_task(evaluator_factory.make())
 

@@ -12,21 +12,20 @@ __all__ = ["VariantBuilderFactory"]
 
 class VariantBuilderFactory:
     def __init__(self):
-        self.name = None
-        self.db_name = ""
-        self.pdb_file = None
         self.parameters = {}
 
     def make(self):
-        database = Database(self.db_name)
-        if "pdb" not in self.parameters:
-            self.parameters["pdb"] = self.pdb_file
+        if self.parameters["pdb_file"] is None:
+            raise RuntimeError("Invalid template PDB file.")
 
-        if self.name == "blast":
+        database = Database(self.parameters["db_name"])
+
+        name = self.parameters["name"]
+        if name == "blast":
             return BlastBuilder(self.parameters, database)
 
-        elif self.name == "mutation":
+        elif name == "mutation":
             return MutationBuilder(self.parameters, database)
 
         else:
-            raise RuntimeError("Variant builder '{}' does not exists.".format(self.name))
+            raise RuntimeError("Variant builder '{}' does not exists.".format(name))

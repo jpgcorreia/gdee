@@ -10,45 +10,26 @@ __all__ = ["EvaluatorFactory"]
 
 class EvaluatorFactory:
     def __init__(self):
-        self.name = None
-        self.work_dir = None
-        self.pdb_file = None
-        self.box = None
-        self.box_center = None
         self.parameters = {}
 
     def make(self):
-        if self.pdb_file is None:
+        if self.parameters["ligand_pdb"] is None:
             raise RuntimeError("Invalid ligand PDB file.")
 
-        if self.box is None or len(self.box) != 3:
-            raise RuntimeError("Invalid evaluator seraching box sizes.")
+        sizes = self.parameters["box_size"]
+        if sizes is None or len(sizes) != 3:
+            raise RuntimeError("Invalid evaluator box sizes.")
 
-        if self.box_center is None or len(self.box_center) != 3:
-            raise RuntimeError("Invalid searching box center.")
+        center = self.parameters["box_center"]
+        if center is None or len(center) != 3:
+            raise RuntimeError("Invalid evaluator box center.")
 
-        params = EvaluatorParameters(
-            self.work_dir,
-            self.pdb_file,
-            self.box,
-            self.box_center,
-            self.parameters
-        )
+        name = self.parameters["name"]
+        if name == "vina":
+            return VinaDocking(self.parameters)
 
-        if self.name == "vina":
-            return VinaDocking(params)
-
-        elif self.name == "vinardo":
-            return VinardoDocking(params)
+        elif name == "vinardo":
+            return VinardoDocking(self.parameters)
 
         else:
-            raise RuntimeError("Evaluator '{}' does not exists.".format(self.name))
-
-
-class EvaluatorParameters:
-    def __init__(self, work_dir, pdb_file, box, box_center, extra_params):
-        self.work_dir = work_dir
-        self.pdb_file = pdb_file
-        self.sizes = box
-        self.center = box_center
-        self.extra_params = extra_params
+            raise RuntimeError("Evaluator '{}' does not exists.".format(name))
