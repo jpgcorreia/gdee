@@ -18,7 +18,7 @@ class VariantBuilderFactory:
         if self.parameters["pdb_file"] is None:
             raise RuntimeError("Invalid template PDB file.")
 
-        database = Database(self.parameters["db_name"])
+        database = Database(self.parameters["db_file"])
 
         name = self.parameters["name"]
         if name == "blast":
