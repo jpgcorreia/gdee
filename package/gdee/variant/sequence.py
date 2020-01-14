@@ -48,8 +48,9 @@ def non_negative(array):
 
 
 class SeqPos:
-    def __init__(self, index, resid, resname=None):
+    def __init__(self, index, chain, resid, resname=None):
         self.index = index
+        self.chain = chain
         self.resid = int(resid)
         self._resname = "gap"
         self._gap = True
@@ -68,6 +69,18 @@ class SeqPos:
     def code(self):
         return self._code
 
+    @code.setter
+    def code(self, value):
+        self._code = str(value)
+
+        if value == "-":
+            self._resname = "gap"
+            self._gap = True
+
+        else:
+            self._resname = one_to_three(value)
+            self._gap = False
+
     @property
     def is_gap(self):
         return self._gap
@@ -78,15 +91,7 @@ class SeqPos:
 
     @resname.setter
     def resname(self, value):
-        self._resname = str(value)
-
-        if value == "gap":
-            self._code = "-"
-            self._gap = True
-
-        else:
-            self._code = three_to_one(value)
-            self._gap = False
+        self.code = three_to_one(str(value))
 
 
 class ChainSeq(list):
@@ -151,7 +156,7 @@ class ProtSeq:
             self._chain_ids[segment.segid] = chain
 
             for res in (segment.atoms & protein).residues:
-                chain.append(SeqPos(seq_idx, res.resid, res.resname))
+                chain.append(SeqPos(seq_idx, chain.code, res.resid, res.resname))
                 seq_idx += 1
 
     def copy(self):
