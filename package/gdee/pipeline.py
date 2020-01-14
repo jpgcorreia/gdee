@@ -66,6 +66,9 @@ class Pipeline:
         return self.variant_builder.next_job()
 
     def run_pipeline(self, job_data):
+        for step in self.task_list:
+            job_data = step.run(job_data)
+
         return job_data
 
     def save_results(self, results):
