@@ -38,6 +38,8 @@ class MutationBuilder:
             raise RuntimeError("No residues were selected to be mutated")
 
         self.mut_sel = self.select(self.parameters["selection"])
+        self.mut_index = [res.index for res in self.mut_sel]
+        self.mut_index.sort()
 
     def select(self, selection):
         selected = []
@@ -65,7 +67,7 @@ class MutationBuilder:
         return "|".join("{}:{}:{}".format(res.chain, res.resid, res.code) for res in self.mut_sel)
 
     def next_job(self):
-        if self.iterations > self.max_iter:
+        if self.iterations >= self.max_iter:
             return None
 
         if not self._initialized:
@@ -82,9 +84,15 @@ class MutationBuilder:
             wildtype = False
 
         self.db.register_variant(self.prot_id, mut_name, wildtype)
+        variant = self.variant.copy()
+        variant.name = mut_name
         self.iterations += 1
 
-        job = {"protein": self.variant.copy()}
+        job = {
+            "wildtype": self.protein.copy(),
+            "variant": variant,
+            "mut_index": self.mut_index.copy()
+        }
         return job
 
     def save_results(self, data):
