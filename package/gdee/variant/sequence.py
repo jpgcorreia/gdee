@@ -142,6 +142,9 @@ class ProtSeq:
 
         return self._chain_ids[key]
 
+    def __iter__(self):
+        return self._chains.__iter__()
+
     def _init_from_fasta(self):
         raise NotImplementedError("This method should be implemented")
 
@@ -164,6 +167,13 @@ class ProtSeq:
 
     def keys(self):
         return self._chain_ids.keys()
+
+    def to_modeller(self):
+        seq = ""
+        for chain in self._chains:
+            seq += "/" + str(chain)
+
+        return seq[1:]
 
 
 class MatrixMutation:
