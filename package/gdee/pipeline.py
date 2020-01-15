@@ -5,6 +5,7 @@
 from gdee.variant import VariantBuilderFactory
 from gdee.modeling import ModelBuilderFactory
 from gdee.evaluator import EvaluatorFactory
+from path import Path
 import os
 
 
@@ -22,7 +23,10 @@ class PipelineFactory:
         self.evaluator_parameters = {}
 
     def make(self):
+        self.pdb = Path(self.pdb).abspath()
         pipeline = Pipeline()
+        pipeline.work_dir = Path(self.work_dir).abspath() / "files"
+        pipeline.work_dir.makedirs_p()
 
         variant_factory = VariantBuilderFactory()
         self.variant_parameters["db_file"] = self.db_file
@@ -32,13 +36,11 @@ class PipelineFactory:
         pipeline.variant_builder = variant_factory.make()
 
         model_factory = ModelBuilderFactory()
-        self.model_parameters["work_dir"] = self.work_dir
         self.model_parameters["pdb_file"] = self.pdb
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
 
         evaluator_factory = EvaluatorFactory()
-        self.evaluator_parameters["work_dir"] = self.work_dir
         evaluator_factory.parameters = self.evaluator_parameters
         pipeline.add_task(evaluator_factory.make())
 
@@ -48,6 +50,7 @@ class PipelineFactory:
 class Pipeline:
     def __init__(self):
         self.database = None
+        self.work_dir = Path()
         self._variant_builder = None
         self.task_list = []
 
@@ -66,10 +69,16 @@ class Pipeline:
         return self.variant_builder.next_job()
 
     def run_pipeline(self, job_data):
+        dir_name = job_data["variant"].name.replace("|", "_").replace(":", "")
+        job_dir = self.work_dir / dir_name
+        job_dir.makedirs_p()
+        job_data["job_dir"] = job_dir
+
         for step in self.task_list:
             job_data = step.run(job_data)
 
         return job_data
 
     def save_results(self, results):
+        # TODO remove dir and del from dict
         self._variant_builder.save_results(results)

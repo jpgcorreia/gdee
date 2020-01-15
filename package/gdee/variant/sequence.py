@@ -149,7 +149,7 @@ class ProtSeq:
         raise NotImplementedError("This method should be implemented")
 
     def _init_from_pdb(self):
-        pdb = mda.Universe(self.input_file)
+        pdb = mda.Universe(str(self.input_file))
         protein = pdb.select_atoms("protein")
 
         seq_idx = 0
