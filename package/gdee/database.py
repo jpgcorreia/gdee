@@ -48,6 +48,7 @@ class Database:
                 "            REFERENCES Proteins(prot_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
+                "        directory TEXT,"
                 "        is_wildtype INT NOT NULL,"
                 "        pdb_file TEXT,"
                 "        pdb_code TEXT"

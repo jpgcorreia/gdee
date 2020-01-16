@@ -72,6 +72,7 @@ class Pipeline:
         dir_name = job_data["variant"].name.replace("|", "_").replace(":", "")
         job_dir = self.work_dir / dir_name
         job_dir.makedirs_p()
+        job_data["variant_dir"] = dir_name
         job_data["job_dir"] = job_dir
 
         for step in self.task_list:
