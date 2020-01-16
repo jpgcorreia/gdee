@@ -17,6 +17,7 @@ class PipelineFactory:
         self.protein_name = None
         self.work_dir = None
         self.pdb = None
+        self.ligand_pdbqt = None
         self.db_file = None
         self.variant_parameters = {}
         self.model_parameters = {}
@@ -41,6 +42,7 @@ class PipelineFactory:
         pipeline.add_task(model_factory.make())
 
         evaluator_factory = EvaluatorFactory()
+        self.evaluator_parameters["ligand_pdbqt"] = self.ligand_pdbqt
         evaluator_factory.parameters = self.evaluator_parameters
         pipeline.add_task(evaluator_factory.make())
 

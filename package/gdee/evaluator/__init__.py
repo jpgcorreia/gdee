@@ -13,8 +13,8 @@ class EvaluatorFactory:
         self.parameters = {}
 
     def make(self):
-        if self.parameters["ligand_pdb"] is None:
-            raise RuntimeError("Invalid ligand PDB file.")
+        if self.parameters["ligand_pdbqt"] is None:
+            raise RuntimeError("Invalid ligand PDBQT file.")
 
         sizes = self.parameters["box_size"]
         if sizes is None or len(sizes) != 3:
