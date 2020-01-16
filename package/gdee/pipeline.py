@@ -15,6 +15,7 @@ __all__ = ["PipelineFactory"]
 class PipelineFactory:
     def __init__(self):
         self.protein_name = None
+        self.programs = {}
         self.work_dir = None
         self.pdb = None
         self.ligand_pdbqt = None
@@ -43,6 +44,7 @@ class PipelineFactory:
 
         evaluator_factory = EvaluatorFactory()
         self.evaluator_parameters["ligand_pdbqt"] = self.ligand_pdbqt
+        self.evaluator_parameters.update(self.programs)
         evaluator_factory.parameters = self.evaluator_parameters
         pipeline.add_task(evaluator_factory.make())
 

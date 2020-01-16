@@ -91,7 +91,7 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        method TEXT NOT NULL,"
-                "        energy REAL NOT NULL,"
+                "        energies TEXT NOT NULL,"
                 "        pdb_file TEXT NOT NULL"
                 "    );"
         )
