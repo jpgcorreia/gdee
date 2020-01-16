@@ -143,7 +143,7 @@ class ProtSeq:
         return self._chain_ids[key]
 
     def __iter__(self):
-        return self._chains.__iter__()
+        return iter(self._chains)
 
     def _init_from_fasta(self):
         raise NotImplementedError("This method should be implemented")
