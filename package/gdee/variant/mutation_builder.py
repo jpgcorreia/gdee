@@ -76,19 +76,22 @@ class MutationBuilder:
         wildtype = True # First one is always wildtype
         mut_name = self.mutations()
 
-        while self.db.variant_exists(mut_name):
+        while self.db.variant_exists(self.prot_id, mut_name):
             for residue in self.mut_sel:
                 residue.code = self.matrix.mutate(residue.code, self.invert_weights)
 
             mut_name = self.mutations()
             wildtype = False
 
-        self.db.register_variant(self.prot_id, mut_name, wildtype)
+        variant_dir = mut_name.replace("|", "_").replace(":", "")
+        variant_id = self.db.register_variant(self.prot_id, mut_name, variant_dir, wildtype)
         variant = self.variant.copy()
         variant.name = mut_name
         self.iterations += 1
 
         job = {
+            "variant_dir": variant_dir,
+            "variant_id": variant_id,
             "wildtype": self.protein.copy(),
             "variant": variant,
             "mut_index": self.mut_index.copy()
@@ -96,4 +99,25 @@ class MutationBuilder:
         return job
 
     def save_results(self, data):
-        pass
+        variant_id = data["variant_id"]
+        models = data["models"]
+
+        for model_idx in range(len(models["pdbs"])):
+            model_id = self.db.register_model(
+                variant_id,
+                models["method"],
+                [models["scores"][model_idx]],
+                models["pdbs"][model_idx]
+            )
+
+            eval_data = data["evaluations"][model_idx]
+
+            eval_id = self.db.register_evaluation(
+                variant_id,
+                model_id,
+                eval_data["ligand_file"],
+                eval_data["method"],
+                eval_data["energies"],
+                [eval_data["pdb"]]
+            )
+

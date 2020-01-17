@@ -73,10 +73,8 @@ class Pipeline:
         return self.variant_builder.next_job()
 
     def run_pipeline(self, job_data):
-        dir_name = job_data["variant"].name.replace("|", "_").replace(":", "")
-        job_dir = self.work_dir / dir_name
+        job_dir = self.work_dir / job_data["variant_dir"]
         job_dir.makedirs_p()
-        job_data["variant_dir"] = dir_name
         job_data["job_dir"] = job_dir
 
         for step in self.task_list:
@@ -85,5 +83,4 @@ class Pipeline:
         return job_data
 
     def save_results(self, results):
-        # TODO remove dir and del from dict
         self._variant_builder.save_results(results)

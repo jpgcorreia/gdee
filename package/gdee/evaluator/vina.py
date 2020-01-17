@@ -35,7 +35,8 @@ class BaseVina:
         job_dir = job_data["job_dir"]
         temp_dir = TemporaryDirectory(prefix="gdee_docking")
         temp_path = Path(temp_dir.name)
-        Path(self.parameters["ligand_pdbqt"]).copy(temp_path / "ligand.pdbqt")
+        ligand_file = self.parameters["ligand_pdbqt"]
+        Path(ligand_file).copy(temp_path / "ligand.pdbqt")
         docking_data = []
 
         with temp_path:
@@ -47,14 +48,12 @@ class BaseVina:
                 pdbqt = PDBQT("results.pdbqt")
                 results_pdb = "docking_{:04d}.pdb".format(idx)
                 pdbqt.write_pdb(job_dir / results_pdb)
-                energies = []
-                for model in pdbqt:
-                    energies.append("{:.2f}".format(model.energy))
 
                 docking_data.append({
+                    "ligand_file": ligand_file,
                     "method": self.name,
                     "pdb": results_pdb,
-                    "energies": "|".join(energies)
+                    "energies": [model.energy for model in pdbqt]
                 })
 
         job_data["evaluations"] = docking_data

@@ -6,6 +6,15 @@ import sqlite3 as sql
 import os
 
 
+def list_serialize(values):
+    try:
+        return "|".join(map(lambda x: "{:.4f}".format(x), values))
+    except ValueError:
+        pass
+
+    return "|".join(map(lambda x: "{}".format(x), values))
+
+
 class Database:
     def __init__(self, filename):
         if os.path.splitext(filename)[1] != ".sqlite3":
@@ -62,17 +71,8 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        method TEXT NOT NULL,"
-                "        pdb_files TEXT NOT NULL"
-                "    );"
-                ""
-                "CREATE TABLE IF NOT EXISTS"
-                "    Ligands ("
-                "        ligand_id INTEGER PRIMARY KEY,"
-                "        smiles TEXT UNIQUE NOT NULL,"
-                "        pdb_file TEXT NOT NULL,"
-                "        pdbqt_file TEXT NOT NULL,"
-                "        atom_names TEXT NOT NULL,"
-                "        atom_coords TEXT NOT NULL"
+                "        scores TEXT NOT NULL,"
+                "        pdb_file TEXT NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
@@ -86,13 +86,15 @@ class Database:
                 "            REFERENCES Models(model_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
-                "        ligand_id"
-                "            REFERENCES Ligands(ligand_id)"
-                "                ON DELETE CASCADE"
-                "                ON UPDATE CASCADE,"
+                "        ligand_file TEXT NOT NULL,"
                 "        method TEXT NOT NULL,"
                 "        energies TEXT NOT NULL,"
-                "        pdb_file TEXT NOT NULL"
+                "        pdb_files TEXT NOT NULL,"
+                "        UNIQUE("
+                "            model_id,"
+                "            ligand_file,"
+                "            method"
+                "        )"
                 "    );"
         )
 
@@ -137,7 +139,7 @@ class Database:
 
         return cursor.lastrowid
 
-    def variant_exists(self, mutations):
+    def variant_exists(self, prot_id, mutations):
         cursor = self.conn.execute(
             "SELECT EXISTS ("
             "    SELECT"
@@ -145,26 +147,65 @@ class Database:
             "    FROM"
             "        Variants"
             "    WHERE"
+            "        prot_id = ?"
+            "        AND"
             "        mutations = ?"
             ");",
-            (mutations,)
+            (prot_id, mutations,)
         )
         return bool(cursor.fetchone()[0])
 
-    def register_variant(self, prot_id, mutations, wildtype, pdb_file=None, pdb_code=None):
+    def register_variant(self, prot_id, mutations, directory, wildtype, pdb_file=None, pdb_code=None):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
             "    Variants ("
             "        mutations,"
             "        prot_id,"
+            "        directory,"
             "        is_wildtype,"
             "        pdb_file,"
             "        pdb_code"
             "    ) "
-            "VALUES (?, ?, ?, ?, ?);",
-            (mutations, prot_id, bool(wildtype), pdb_file, pdb_code)
+            "VALUES (?, ?, ?, ?, ?, ?);",
+            (mutations, prot_id, directory, bool(wildtype), pdb_file, pdb_code)
         )
         conn.commit()
 
+        return cursor.lastrowid
+
+    def register_model(self, variant_id, method, scores, pdb_file):
+        conn = self.conn
+        cursor = conn.execute(
+            "INSERT INTO"
+            "    Models ("
+            "        variant_id,"
+            "        method,"
+            "        scores,"
+            "        pdb_file"
+            "    ) "
+            "VALUES (?, ?, ?, ?);",
+            (variant_id, method, list_serialize(scores), pdb_file)
+        )
+
+        conn.commit()
+        return cursor.lastrowid
+
+    def register_evaluation(self, variant_id, model_id, ligand_file, method, energies, pdb_list):
+        conn = self.conn
+        cursor = conn.execute(
+            "INSERT INTO"
+            "    Evaluations ("
+            "        variant_id,"
+            "        model_id,"
+            "        ligand_file,"
+            "        method,"
+            "        energies,"
+            "        pdb_files"
+            "    ) "
+            "VALUES (?, ?, ?, ?, ?, ?);",
+            (variant_id, model_id, ligand_file, method, list_serialize(energies), list_serialize(pdb_list))
+        )
+
+        conn.commit()
         return cursor.lastrowid
