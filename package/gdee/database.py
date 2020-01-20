@@ -174,6 +174,19 @@ class Database:
 
         return cursor.lastrowid
 
+    def remove_variant(self, variant_id):
+        conn = self.conn
+        cursor = conn.execute(
+            "DELETE FROM"
+            "    Variants "
+            "WHERE"
+            "    variant_id = ?;",
+            (variant_id,)
+        )
+        conn.commit()
+
+        return cursor.lastrowid
+
     def register_model(self, variant_id, method, scores, pdb_file):
         conn = self.conn
         cursor = conn.execute(

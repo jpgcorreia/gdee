@@ -98,6 +98,9 @@ class MutationBuilder:
         }
         return job
 
+    def remove_variant(self, data):
+        self.db.remove_variant(data["variant_id"])
+
     def save_results(self, data):
         variant_id = data["variant_id"]
         models = data["models"]
@@ -120,4 +123,3 @@ class MutationBuilder:
                 eval_data["energies"],
                 [eval_data["pdb"]]
             )
-

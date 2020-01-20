@@ -76,11 +76,18 @@ class Pipeline:
         job_dir = self.work_dir / job_data["variant_dir"]
         job_dir.makedirs_p()
         job_data["job_dir"] = job_dir
+        job_data["fatal_error"] = False
 
         for step in self.task_list:
             job_data = step.run(job_data)
+            if job_data["fatal_error"]:
+                return job_data
 
         return job_data
 
     def save_results(self, results):
+        if results["fatal_error"]:
+            self._variant_builder.remove_variant(results)
+            print("Error while processing variant: {}".format(results["variant"].name))
+
         self._variant_builder.save_results(results)

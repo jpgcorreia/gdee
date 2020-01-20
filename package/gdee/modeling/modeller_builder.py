@@ -26,6 +26,10 @@ class ModellerBuilder:
             self.write_alignment(job_data)
 
             model_data = self.build_models(job_data)
+            if not model_data:
+                job_data["fatal_error"] = True
+                return job_data
+
             model_data.sort(key=lambda x: x["molpdf"])
             top_models = model_data[:self.parameters["num_models"]]
 
@@ -84,8 +88,9 @@ class ModellerBuilder:
             model.md_level = automodel.refine.very_slow
 
         model.make()
+        model_data = [data for data in model.outputs if "molpdf" in data]
 
-        return model.outputs
+        return model_data
 
     def rename_models(self, structure, prot_seq):
         res_idx = 0
