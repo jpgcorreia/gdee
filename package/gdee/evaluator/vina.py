@@ -28,9 +28,6 @@ class BaseVina:
         self.extra_arguments = []
         self.prepare_receptor = Path(parameters["mgltools"]) / "MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py"
 
-    def extra_parameters(self):
-        raise NotImplementedError("Derived classes must implement this method")
-
     def run(self, job_data):
         job_dir = job_data["job_dir"]
         temp_dir = TemporaryDirectory(prefix="gdee_docking")
