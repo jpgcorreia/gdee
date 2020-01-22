@@ -2,7 +2,7 @@
 """
 
 
-class BlastBuilder:
+class MSABuilder:
     def __init__(self, parameters, database):
         self.parameters = parameters
         self.database = database

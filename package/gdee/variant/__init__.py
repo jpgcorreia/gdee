@@ -3,7 +3,7 @@
 
 
 from ..database import Database
-from .blast_builder import BlastBuilder
+from .msa_builder import MSABuilder
 from .mutation_builder import MutationBuilder
 
 
@@ -21,8 +21,8 @@ class VariantBuilderFactory:
         database = Database(self.parameters["db_file"])
 
         name = self.parameters["name"]
-        if name == "blast":
-            return BlastBuilder(self.parameters, database)
+        if name == "msa":
+            return MSABuilder(self.parameters, database)
 
         elif name == "mutation":
             return MutationBuilder(self.parameters, database)
