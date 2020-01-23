@@ -223,7 +223,7 @@ class MatrixMutation:
 class Blosum62Mutation(MatrixMutation):
     def __init__(self):
         # Include only usual amino acids
-        super().__init__(BLOSUM62_AA[:-4], BLOSUM62[:-4, :-4], True)
+        super().__init__(BLOSUM62_AA[:-4], BLOSUM62[:-4, :-4], False)
 
 
 BLOSUM62_AA ="A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "B", "Z", "X", "*"
