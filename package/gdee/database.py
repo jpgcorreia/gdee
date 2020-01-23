@@ -52,7 +52,8 @@ class Database:
                 "CREATE TABLE IF NOT EXISTS"
                 "    Variants ("
                 "        variant_id INTEGER PRIMARY KEY,"
-                "        mutations TEXT UNIQUE NOT NULL,"
+                "        name TEXT NOT NULL,"
+                "        sequence TEXT NOT NULL,"
                 "        prot_id"
                 "            REFERENCES Proteins(prot_id)"
                 "                ON DELETE CASCADE"
@@ -60,7 +61,12 @@ class Database:
                 "        directory TEXT,"
                 "        is_wildtype INT NOT NULL,"
                 "        pdb_file TEXT,"
-                "        pdb_code TEXT"
+                "        pdb_code TEXT,"
+                "        UNIQUE("
+                "            name,"
+                "            sequence,"
+                "            prot_id"
+                "        )"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
@@ -149,26 +155,27 @@ class Database:
             "    WHERE"
             "        prot_id = ?"
             "        AND"
-            "        mutations = ?"
+            "        name = ?"
             ");",
             (prot_id, mutations,)
         )
         return bool(cursor.fetchone()[0])
 
-    def register_variant(self, prot_id, mutations, directory, wildtype, pdb_file=None, pdb_code=None):
+    def register_variant(self, prot_id, name, sequence, directory, wildtype, pdb_file=None, pdb_code=None):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
             "    Variants ("
-            "        mutations,"
+            "        name,"
+            "        sequence,"
             "        prot_id,"
             "        directory,"
             "        is_wildtype,"
             "        pdb_file,"
             "        pdb_code"
             "    ) "
-            "VALUES (?, ?, ?, ?, ?, ?);",
-            (mutations, prot_id, directory, bool(wildtype), pdb_file, pdb_code)
+            "VALUES (?, ?, ?, ?, ?, ?, ?);",
+            (name, sequence, prot_id, directory, bool(wildtype), pdb_file, pdb_code)
         )
         conn.commit()
 

@@ -46,7 +46,11 @@ class MutationBuilder:
         self.mut_index.sort()
 
     def mutations(self):
-        return "|".join("{}:{}:{}".format(res.chain, res.resid, res.code) for res in self.variant_sel)
+        mutations = []
+        for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
+            mutations.append("{}:{}{}{}".format(wt_res.chain, wt_res.code, wt_res.resid, mut_res.code))
+
+        return "|".join(mutations)
 
     def next_job(self):
         if self.iterations >= self.max_iter:
@@ -66,7 +70,13 @@ class MutationBuilder:
             wildtype = False
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
-        variant_id = self.db.register_variant(self.prot_id, mut_name, variant_dir, wildtype)
+        variant_id = self.db.register_variant(
+            self.prot_id,
+            mut_name,
+            self.variant.to_modeller(),
+            variant_dir,
+            wildtype
+        )
         variant = self.variant.copy()
         variant.name = mut_name
         self.iterations += 1
