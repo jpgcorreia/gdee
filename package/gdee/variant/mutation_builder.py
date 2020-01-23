@@ -2,8 +2,7 @@
 """
 
 
-from .sequence import ProtSeq, MatrixMutation, Blosum62Mutation
-from collections import defaultdict
+from .sequence import ProtSeq, ResidueIndex, MatrixMutation, Blosum62Mutation
 
 
 class MutationBuilder:
@@ -37,34 +36,17 @@ class MutationBuilder:
         if not self.parameters["selection"]:
             raise RuntimeError("No residues were selected to be mutated")
 
-        self.mut_sel = self.select(self.parameters["selection"])
-        self.mut_index = [res.index for res in self.mut_sel]
+        selection = ResidueIndex(self.protein, self.parameters["selection"])
+        self.wildtype_sel = selection.apply(self.protein)
+        self.variant_sel = selection.apply(self.variant)
+        for wt, mut in zip(self.wildtype_sel, self.variant_sel):
+            assert wt == mut # Order check
+
+        self.mut_index = [res.index for res in self.variant_sel]
         self.mut_index.sort()
 
-    def select(self, selection):
-        selected = []
-        chain_sel = defaultdict(set)
-
-        for residue in selection.split(" "):
-            chain, resid = residue.split(":")
-            chain_sel[chain].add(int(resid))
-
-        for chain, sel_list in chain_sel.items():
-            for residue in self.variant[chain]:
-                if residue.resid in sel_list:
-                    selected.append(residue)
-                    sel_list.remove(residue.resid)
-
-            if sel_list:
-                not_found = ", ".join(map(str, sorted(sel_list)))
-                raise RuntimeError("Residues not found in chain '{}': {}".format(chain, not_found))
-
-        selected.sort(key=lambda x: x.index)
-
-        return selected
-
     def mutations(self):
-        return "|".join("{}:{}:{}".format(res.chain, res.resid, res.code) for res in self.mut_sel)
+        return "|".join("{}:{}:{}".format(res.chain, res.resid, res.code) for res in self.variant_sel)
 
     def next_job(self):
         if self.iterations >= self.max_iter:
@@ -77,8 +59,8 @@ class MutationBuilder:
         mut_name = self.mutations()
 
         while self.db.variant_exists(self.prot_id, mut_name):
-            for residue in self.mut_sel:
-                residue.code = self.matrix.mutate(residue.code, self.invert_weights)
+            for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
+                mut_res.code = self.matrix.mutate(wt_res.code, self.invert_weights)
 
             mut_name = self.mutations()
             wildtype = False

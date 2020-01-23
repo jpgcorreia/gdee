@@ -7,9 +7,10 @@ import MDAnalysis as mda
 import os
 import copy
 import random
+from collections import defaultdict
 
 
-__all__ = ["three_to_one", "SEQ_3_1", "MatrixMutation", "Blosum62Mutation"]
+__all__ = ["three_to_one", "SEQ_3_1", "ProtSeq", "ChainSeq", "SeqPos", "ResidueIndex", "MatrixMutation", "Blosum62Mutation"]
 
 
 SEQ_1_3 = {"A": "ALA", "C": "CYS", "D": "ASP", "E": "GLU", "F": "PHE", "G": "GLY", "H": "HIS", "I": "ILE", "K": "LYS", "L": "LEU", "M": "MET", "N": "ASN", "P": "PRO", "Q": "GLN", "R": "ARG", "S": "SER", "T": "THR", "V": "VAL", "W": "TRP", "Y": "TYR"}
@@ -60,10 +61,13 @@ class SeqPos:
             self.resname = resname
 
     def __repr__(self):
-        return "SeqPos(index={}, resid={}, resname='{}')".format(self.index, self.resid, self.resname)
+        return "SeqPos(index={}, chain='{}', resid={}, resname='{}')".format(self.index, self.chain, self.resid, self.resname)
 
     def __str__(self):
         return self._code
+
+    def __eq__(self, other):
+        return self.index == other.index and self.chain == other.chain and self.resid == other.resid and self.resname == other.resname
 
     @property
     def code(self):
@@ -174,6 +178,39 @@ class ProtSeq:
             seq += "/" + str(chain)
 
         return seq[1:]
+
+
+class ResidueIndex:
+    def __init__(self, prot_seq, selection):
+        self.protein = prot_seq
+        self.sel_text = selection
+        self._sel_index = defaultdict(list)
+        self.update()
+
+    def apply(self, prot_seq):
+        selected = []
+        for chain, indexes in self._sel_index.items():
+            for index in indexes:
+                selected.append(prot_seq[chain][index])
+
+        return selected
+
+    def update(self):
+        input_sel = defaultdict(set)
+
+        for residue in self.sel_text.split(" "):
+            chain, resid = residue.split(":")
+            input_sel[chain].add(int(resid))
+
+        for chain, sel_list in input_sel.items():
+            for index, residue in enumerate(self.protein[chain]):
+                if residue.resid in sel_list:
+                    self._sel_index[chain].append(index)
+                    sel_list.remove(residue.resid)
+
+            if sel_list:
+                not_found = ", ".join(map(str, sorted(sel_list)))
+                raise RuntimeError("Residues not found in chain '{}': {}".format(chain, not_found))
 
 
 class MatrixMutation:
