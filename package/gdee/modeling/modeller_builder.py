@@ -114,11 +114,10 @@ class MutationModel(automodel.automodel):
         self._opt_residues_coff = coff
 
     def select_atoms(self):
+        if not self._opt_residues or self._opt_residues_coff == 0:
+            return mdl.selection(self.residues)
+
         res = [self.residues[pos] for pos in self._opt_residues]
         sel = mdl.selection(res)
 
-        if self._opt_residues_coff == 0:
-            return sel
-
-        else:
-            return sel.select_sphere(self._opt_residues_coff).by_residue()
+        return sel.select_sphere(self._opt_residues_coff).by_residue()
