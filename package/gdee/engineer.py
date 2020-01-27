@@ -19,7 +19,7 @@ class ProteinEngineering:
         self.ligand_pdbqt = None
         self.platform = "simple"
         self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina"}
-        self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "conservative": True, "max_iterations": 1000}
+        self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "conservative": True, "max_iterations": 1000, "msa": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
         self.evaluator = {"name": "vina", "exhaustiveness": 50}
 

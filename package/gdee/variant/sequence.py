@@ -7,6 +7,8 @@ import MDAnalysis as mda
 import os
 import copy
 import random
+import string
+import itertools
 from collections import defaultdict
 
 
@@ -118,7 +120,7 @@ class ChainSeq(list):
 
 
 class ProtSeq:
-    def __init__(self, name, input_file=None):
+    def __init__(self, name, input_file=None, sequence=None):
         self.name = name
         self.input_file = input_file
         self._chains = []
@@ -134,6 +136,12 @@ class ProtSeq:
 
             else:
                 raise RuntimeError("Unknown file type")
+
+        elif sequence is not None:
+            self._init_from_sequence(sequence)
+
+        else:
+            raise RuntimeError("Input file or sequence must be provided")
 
     def __repr__(self):
         return "<ProtSeq object '{}' with {} chains>".format(self.name, len(self._chains))
@@ -165,6 +173,22 @@ class ProtSeq:
             for res in (segment.atoms & protein).residues:
                 chain.append(SeqPos(seq_idx, chain.code, res.resid, res.resname))
                 seq_idx += 1
+
+    def _init_from_sequence(self, sequence):
+        seq_idx = 0
+        resid = 1
+        for idx, seq in enumerate(sequence.split("/")):
+            chain = ChainSeq(string.ascii_uppercase[idx])
+            self._chains.append(chain)
+            self._chain_ids[chain.code] = chain
+
+            for code in seq:
+                chain.append(SeqPos(seq_idx, chain.code, resid, one_to_three(code)))
+                seq_idx += 1
+                resid += 1
+
+    def flatten(self):
+        return tuple(itertools.chain.from_iterable(self._chains))
 
     def copy(self):
         return copy.deepcopy(self)
