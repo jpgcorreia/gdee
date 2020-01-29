@@ -75,6 +75,8 @@ class BaseVina:
             self.program,
             "--exhaustiveness", self.parameters["exhaustiveness"],
             "--cpu", "1",
+            "--num_modes", "500",   # Exaggerated
+            "--energy_range", "30", # numbers
             "--receptor", "model.pdbqt",
             "--ligand", "ligand.pdbqt",
             "--out", "results.pdbqt"
