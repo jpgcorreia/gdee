@@ -18,7 +18,8 @@ class Message:
 
 
 class MPIPlatform:
-    def __init__(self, pipeline):
+    def __init__(self, parameters, pipeline):
+        self.local_cpu = parameters["local_cpu"]
         self.pipeline = pipeline
         self.comm = MPI.COMM_WORLD
         self.rank = self.comm.Get_rank()

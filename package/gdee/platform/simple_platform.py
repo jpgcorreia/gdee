@@ -3,7 +3,7 @@
 
 
 class SimplePlatform:
-    def __init__(self, pipeline):
+    def __init__(self, parameters, pipeline):
         self.pipeline = pipeline
 
     def run(self):

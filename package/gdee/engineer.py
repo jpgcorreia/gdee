@@ -17,7 +17,7 @@ class ProteinEngineering:
         self.db_file = database
         self.pdb = None
         self.ligand_pdbqt = None
-        self.platform = "simple"
+        self.platform = {"name": "simple", "local_cpu": 1}
         self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina"}
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "conservative": True, "max_iterations": 1000, "msa": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
@@ -37,7 +37,7 @@ class ProteinEngineering:
         pipeline = pipeline_factory.make()
 
         platform_factory = PlatformFactory()
-        platform_factory.name = self.platform
+        platform_factory.parameters = self.platform
         platform_factory.pipeline = pipeline
         platform = platform_factory.make()
 
