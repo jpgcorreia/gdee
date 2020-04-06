@@ -7,9 +7,9 @@ class SimplePlatform:
         self.pipeline = pipeline
 
     def run(self):
-        self.pipeline.run_initial()
+        job_data = self.pipeline.next_job(1)
 
-        while self.pipeline.available():
-            job_data = self.pipeline.next_job()
-            results = self.pipeline.run_pipeline(job_data)
+        while job_data:
+            results = [self.pipeline.run_pipeline(data) for data in job_data]
             self.pipeline.save_results(results)
+            job_data = self.pipeline.next_job(1)

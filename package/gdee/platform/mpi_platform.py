@@ -29,21 +29,21 @@ class MPIPlatform:
 
     def run(self):
         if self.rank == self.root:
-            self.manager = MPIManager(self.comm, self.pipeline)
+            self.manager = MPIManager(self.comm, self.local_cpu, self.pipeline)
             self.manager.run()
 
         else:
-            self.runner = MPIRunner(self.comm, self.root, self.pipeline)
+            self.runner = MPIRunner(self.comm, self.root, self.local_cpu, self.pipeline)
             self.runner.run()
 
 
 class MPIManager:
-    def __init__(self, mpi_comm, pipeline):
+    def __init__(self, mpi_comm, local_cpu, pipeline):
         self.comm = mpi_comm
         self.rank = mpi_comm.Get_rank()
         self.status = MPI.Status()
         self.pipeline = pipeline
-        self.alive = mpi_comm.Get_size() - 1 # Number of runners
+        self.alive = local_cpu * (mpi_comm.Get_size() - 1) # Number of runners
         self.not_saved = 0
 
     def run(self):
@@ -51,46 +51,47 @@ class MPIManager:
             message = self.comm.recv(source=MPI.ANY_SOURCE, status=self.status)
 
             if message.request == RequestType.get_task:
-                self.send_task()
+                self.send_task(message.data)
 
             if message.request == RequestType.save:
                 self.pipeline.save_results(message.data)
-                self.not_saved -= 1
+                self.not_saved -= len(message.data)
 
-    def send_task(self):
-        task = self.pipeline.next_job()
+    def send_task(self, size):
+        tasks = self.pipeline.next_job(size)
 
-        if task is None:
-            message = Message(RequestType.terminate)
-            self.alive -= 1
+        if tasks:
+            message = Message(RequestType.run_task, tasks)
+            self.not_saved += len(tasks)
 
         else:
-            message = Message(RequestType.run_task, task)
-            self.not_saved += 1
+            message = Message(RequestType.terminate)
+            self.alive -= size
 
         runner = self.status.Get_source()
         self.comm.send(message, dest=runner)
 
 
 class MPIRunner:
-    def __init__(self, mpi_comm, root, pipeline):
+    def __init__(self, mpi_comm, root, n_cpu, pipeline):
         self.comm = mpi_comm
         self.rank = mpi_comm.Get_rank()
         self.root = root
+        self.n_cpu = n_cpu
         self.pipeline = pipeline
 
     def run(self):
         message = self.request_task()
 
         while message.request != RequestType.terminate:
-            results = self.pipeline.run_pipeline(message.data)
+            results = [self.pipeline.run_pipeline(data) for data in message.data]
             self.comm.send(Message(RequestType.save, results), dest=self.root)
 
             message = self.request_task()
 
     def request_task(self):
         return self.comm.sendrecv(
-            Message(RequestType.get_task),
+            Message(RequestType.get_task, self.n_cpu),
             dest=self.root,
             source=self.root
         )

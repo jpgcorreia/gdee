@@ -72,11 +72,19 @@ class Pipeline:
     def add_task(self, task):
         self.task_list.append(task)
 
-    def next_job(self):
+    def next_job(self, size):
         if self._terminate:
             return None
 
-        return self.variant_builder.next_job()
+        job_list = []
+        for i in range(size):
+            job = self.variant_builder.next_job()
+            if job is None:
+                break
+
+            job_list.append(job)
+
+        return job_list
 
     def run_pipeline(self, job_data):
         job_dir = self.work_dir / job_data["variant_dir"]
@@ -91,12 +99,13 @@ class Pipeline:
 
         return job_data
 
-    def save_results(self, results):
-        if results["fatal_error"]:
-            self._variant_builder.remove_variant(results)
-            print("Error while processing variant: {}".format(results["variant"].name))
+    def save_results(self, data):
+        for result in data:
+            if result["fatal_error"]:
+                self._variant_builder.remove_variant(result)
+                print("Error while processing variant: {}".format(result["variant"].name))
 
-        self._variant_builder.save_results(results)
+            self._variant_builder.save_results(result)
 
     def catch_signals(self, signal, frame):
         self._terminate = True
