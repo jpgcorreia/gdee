@@ -73,10 +73,11 @@ class Pipeline:
         self.task_list.append(task)
 
     def next_job(self, size):
-        if self._terminate:
-            return None
-
         job_list = []
+
+        if self._terminate:
+            return job_list
+
         for i in range(size):
             job = self.variant_builder.next_job()
             if job is None:
