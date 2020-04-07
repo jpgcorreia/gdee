@@ -1,6 +1,7 @@
 """
 """
 from mpi4py import MPI
+import multiprocessing
 from enum import IntEnum, auto
 
 
@@ -43,7 +44,7 @@ class MPIManager:
         self.rank = mpi_comm.Get_rank()
         self.status = MPI.Status()
         self.pipeline = pipeline
-        self.alive = local_cpu * (mpi_comm.Get_size() - 1) # Number of runners
+        self.alive = mpi_comm.Get_size() - 1 # Number of MPIRunners
         self.not_saved = 0
 
     def run(self):
@@ -66,7 +67,7 @@ class MPIManager:
 
         else:
             message = Message(RequestType.terminate)
-            self.alive -= size
+            self.alive -= 1
 
         runner = self.status.Get_source()
         self.comm.send(message, dest=runner)
@@ -81,17 +82,65 @@ class MPIRunner:
         self.pipeline = pipeline
 
     def run(self):
-        message = self.request_task()
+        if self.n_cpu > 1:
+            self.run_multiple()
+
+        else:
+            self.run_single()
+
+    def run_multiple(self):
+        with multiprocessing.Pool(self.n_cpu, maxtasksperchild=1) as pool:
+            running = []
+            message = self.request_task(self.n_cpu)
+
+            while message.request != RequestType.terminate:
+                for data in message.data:
+                    running.append(pool.apply_async(self.pipeline.run_pipeline, (data,)))
+
+                results, ended = self.get_ready(running, 0.1)
+
+                # Un-track finished processes
+                for process in ended:
+                    running.remove(process)
+
+                self.send_results(results)
+                message = self.request_task(len(results))
+
+            results = []
+            for process in running:
+                results.append(process.get())
+
+            self.send_results(results)
+
+    def get_ready(self, processes, timeout):
+        results = []
+        ended = []
+
+        while not results:
+            for process in processes:
+                process.wait(timeout)
+
+                if process.ready():
+                    ended.append(process)
+                    results.append(process.get())
+
+        return results, ended
+
+    def run_single(self):
+        message = self.request_task(1)
 
         while message.request != RequestType.terminate:
             results = [self.pipeline.run_pipeline(data) for data in message.data]
-            self.comm.send(Message(RequestType.save, results), dest=self.root)
+            self.send_results(results)
 
-            message = self.request_task()
+            message = self.request_task(1)
 
-    def request_task(self):
+    def send_results(self, results):
+        self.comm.send(Message(RequestType.save, results), dest=self.root)
+
+    def request_task(self, size):
         return self.comm.sendrecv(
-            Message(RequestType.get_task, self.n_cpu),
+            Message(RequestType.get_task, size),
             dest=self.root,
             source=self.root
         )
