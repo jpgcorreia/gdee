@@ -7,7 +7,6 @@ from gdee.modeling import ModelBuilderFactory
 from gdee.evaluator import EvaluatorFactory
 from path import Path
 import os
-import signal
 
 
 __all__ = ["PipelineFactory"]
@@ -30,7 +29,6 @@ class PipelineFactory:
         pipeline = Pipeline()
         pipeline.work_dir = Path(self.work_dir).abspath() / "files"
         pipeline.work_dir.makedirs_p()
-        signal.signal(signal.SIGTERM, pipeline.catch_signals)
 
         variant_factory = VariantBuilderFactory()
         self.variant_parameters["db_file"] = self.db_file
@@ -108,6 +106,5 @@ class Pipeline:
 
             self._variant_builder.save_results(result)
 
-    def catch_signals(self, signal, frame):
+    def terminate(self):
         self._terminate = True
-        print("\nCaught termination signal. Finalizing all workers. This may take some time\n")

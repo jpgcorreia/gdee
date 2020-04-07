@@ -5,6 +5,7 @@
 from gdee.pipeline import PipelineFactory
 from gdee.platform import PlatformFactory
 import os
+import signal
 
 
 __all__ = ["ProteinEngineering"]
@@ -22,6 +23,9 @@ class ProteinEngineering:
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "conservative": True, "max_iterations": 1000, "msa": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
         self.evaluator = {"name": "vina", "exhaustiveness": 50}
+        self._pipeline = None
+        self._terminate = False
+        signal.signal(signal.SIGTERM, self.catch_signals)
 
     def run(self):
         pipeline_factory = PipelineFactory()
@@ -34,11 +38,19 @@ class ProteinEngineering:
         pipeline_factory.variant_parameters = self.variant
         pipeline_factory.model_parameters = self.model
         pipeline_factory.evaluator_parameters = self.evaluator
-        pipeline = pipeline_factory.make()
+        self.pipeline = pipeline_factory.make()
 
         platform_factory = PlatformFactory()
         platform_factory.parameters = self.platform
-        platform_factory.pipeline = pipeline
+        platform_factory.pipeline = self.pipeline
         platform = platform_factory.make()
 
         platform.run()
+
+        if self._terminate:
+            raise RuntimeError("Processing interrupted by a system signal")
+
+    def catch_signals(self, signal, frame):
+        self._terminate = True
+        self.pipeline.terminate()
+        print("\nCaught termination signal. Finalizing all workers. This may take some time\n")
