@@ -54,5 +54,5 @@ class BaseBuilder:
                 eval_data["ligand_file"],
                 eval_data["method"],
                 eval_data["energies"],
-                [eval_data["pdb"]]
+                eval_data["pdb"]
             )

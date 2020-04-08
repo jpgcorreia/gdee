@@ -94,12 +94,59 @@ class Database:
                 "                ON UPDATE CASCADE,"
                 "        ligand_file TEXT NOT NULL,"
                 "        method TEXT NOT NULL,"
-                "        energies TEXT NOT NULL,"
-                "        pdb_files TEXT NOT NULL,"
+                "        pdb_file TEXT NOT NULL,"
                 "        UNIQUE("
                 "            model_id,"
                 "            ligand_file,"
                 "            method"
+                "        )"
+                "    );"
+                ""
+                "CREATE TABLE IF NOT EXISTS"
+                "    Poses ("
+                "        pose_id INTEGER PRIMARY KEY,"
+                "        eval_id"
+                "            REFERENCES Evaluations(eval_id)"
+                "                ON DELETE CASCADE"
+                "                ON UPDATE CASCADE,"
+                "        pdb_index INTEGER NOT NULL,"
+                "        energy FLOAT NOT NULL,"
+                "        UNIQUE("
+                "            eval_id,"
+                "            pdb_index"
+                "        )"
+                "    );"
+                ""
+                "CREATE TABLE IF NOT EXISTS"
+                "    Metering ("
+                "        meter_id INTEGER PRIMARY KEY,"
+                "        groups TEXT NOT NULL,"
+                "        type TEXT NOT NULL,"
+                "        UNIQUE("
+                "            groups,"
+                "            type"
+                "        )"
+                "    );"
+                ""
+                "CREATE TABLE IF NOT EXISTS"
+                "    Measurements ("
+                "        measurement_id INTEGER PRIMARY KEY,"
+                "        meter_id"
+                "            REFERENCES Metering(meter_id)"
+                "                ON DELETE CASCADE"
+                "                ON UPDATE CASCADE,"
+                "        eval_id"
+                "            REFERENCES Evaluations(eval_id)"
+                "                ON DELETE CASCADE"
+                "                ON UPDATE CASCADE,"
+                "        pose_id"
+                "            REFERENCES Poses(pose_id)"
+                "                ON DELETE CASCADE"
+                "                ON UPDATE CASCADE,"
+                "        value FLOAT NOT NULL,"
+                "        UNIQUE("
+                "            meter_id,"
+                "            eval_id"
                 "        )"
                 "    );"
         )
@@ -211,7 +258,7 @@ class Database:
         conn.commit()
         return cursor.lastrowid
 
-    def register_evaluation(self, variant_id, model_id, ligand_file, method, energies, pdb_list):
+    def register_evaluation(self, variant_id, model_id, ligand_file, method, energies, pdb_file):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
@@ -220,12 +267,24 @@ class Database:
             "        model_id,"
             "        ligand_file,"
             "        method,"
-            "        energies,"
-            "        pdb_files"
+            "        pdb_file"
             "    ) "
-            "VALUES (?, ?, ?, ?, ?, ?);",
-            (variant_id, model_id, ligand_file, method, list_serialize(energies), list_serialize(pdb_list))
+            "VALUES (?, ?, ?, ?, ?);",
+            (variant_id, model_id, ligand_file, method, pdb_file)
         )
+        eval_id = cursor.lastrowid
+
+        for index, energy in enumerate(energies):
+            cursor.execute(
+                "INSERT INTO"
+                "    Poses ("
+                "        eval_id,"
+                "        pdb_index,"
+                "        energy"
+                "    ) "
+                "VALUES (?, ?, ?);",
+                (eval_id, index, energy)
+            )
 
         conn.commit()
-        return cursor.lastrowid
+        return eval_id
