@@ -75,11 +75,13 @@ class PDBQT:
                 fd.write("MODEL {:d}\nREMARK ENERGY: {:.2f}\n".format(model_idx, model.energy))
 
                 for atom_idx in range(len(self.atom_data)):
-                    fd.write("{:<29s}{:8.3f}{:8.3f}{:8.3f}                 {}\n".format(
+                    fd.write("{:<29s}{:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}   {}\n".format(
                         self.atom_data[atom_idx],
                         model.coords[atom_idx, 0],
                         model.coords[atom_idx, 1],
                         model.coords[atom_idx, 2],
+                        0,
+                        model.energy,
                         self.atom_qt[atom_idx]
                     ))
 
