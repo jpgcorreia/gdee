@@ -258,7 +258,7 @@ class Database:
         conn.commit()
         return cursor.lastrowid
 
-    def register_evaluation(self, variant_id, model_id, ligand_file, method, energies, pdb_file):
+    def register_evaluation(self, variant_id, model_id, ligand_file, method, pdb_file):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
@@ -272,9 +272,13 @@ class Database:
             "VALUES (?, ?, ?, ?, ?);",
             (variant_id, model_id, ligand_file, method, pdb_file)
         )
-        eval_id = cursor.lastrowid
+        return cursor.lastrowid
 
-        for index, energy in enumerate(energies):
+    def register_poses(self, eval_id, energy):
+        pose_id = []
+        conn = self.conn
+        cursor = conn.cursor()
+        for index, value in enumerate(energy):
             cursor.execute(
                 "INSERT INTO"
                 "    Poses ("
@@ -283,8 +287,9 @@ class Database:
                 "        energy"
                 "    ) "
                 "VALUES (?, ?, ?);",
-                (eval_id, index, energy)
+                (eval_id, index, value)
             )
+            pose_id.append(cursor.lastrowid)
 
         conn.commit()
-        return eval_id
+        return pose_id

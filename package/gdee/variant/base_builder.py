@@ -53,6 +53,10 @@ class BaseBuilder:
                 model_id,
                 eval_data["ligand_file"],
                 eval_data["method"],
-                eval_data["energies"],
                 eval_data["pdb"]
+            )
+
+            pose_id_list = self.db.register_poses(
+                eval_id,
+                eval_data["energies"]
             )
