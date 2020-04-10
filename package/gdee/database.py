@@ -294,15 +294,29 @@ class Database:
         if identifier not in self._metric_ids:
             conn = self.conn
             cursor = conn.execute(
-                "INSERT INTO"
-                "    Metrics ("
-                "        identifier"
-                "    ) "
-                "VALUES (?);",
+                "SELECT"
+                "    metric_id "
+                "FROM"
+                "    Metrics "
+                "WHERE"
+                "    identifier = ?;",
                 (identifier,)
             )
-            self._metric_ids[identifier] = cursor.lastrowid
-            conn.commit()
+            data = cursor.fetchall()
+            if data:
+                self._metric_ids[identifier] = data[0][0]
+
+            else:
+                cursor = conn.execute(
+                    "INSERT INTO"
+                    "    Metrics ("
+                    "        identifier"
+                    "    ) "
+                    "VALUES (?);",
+                    (identifier,)
+                )
+                self._metric_ids[identifier] = cursor.lastrowid
+                conn.commit()
 
         return self._metric_ids[identifier]
 
