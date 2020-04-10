@@ -23,9 +23,13 @@ class ProteinEngineering:
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "conservative": True, "max_iterations": 1000, "msa": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
         self.evaluator = {"name": "vina", "exhaustiveness": 50}
+        self._measurements = []
         self._pipeline = None
         self._terminate = False
         signal.signal(signal.SIGTERM, self.catch_signals)
+
+    def add_measurement(self, metric, protein_sel, ligand_sel):
+        self._measurements.append((metric, protein_sel, ligand_sel))
 
     def run(self):
         pipeline_factory = PipelineFactory()
@@ -38,6 +42,7 @@ class ProteinEngineering:
         pipeline_factory.variant_parameters = self.variant
         pipeline_factory.model_parameters = self.model
         pipeline_factory.evaluator_parameters = self.evaluator
+        pipeline_factory.measurements = self._measurements
         self.pipeline = pipeline_factory.make()
 
         platform_factory = PlatformFactory()

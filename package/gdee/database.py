@@ -22,6 +22,7 @@ class Database:
 
         self.filename = filename
         self._conn = None
+        self._metric_ids = {}
 
     def connect(self):
         # Connect to database
@@ -118,21 +119,16 @@ class Database:
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
-                "    Metering ("
-                "        meter_id INTEGER PRIMARY KEY,"
-                "        groups TEXT NOT NULL,"
-                "        type TEXT NOT NULL,"
-                "        UNIQUE("
-                "            groups,"
-                "            type"
-                "        )"
+                "    Metrics ("
+                "        metric_id INTEGER PRIMARY KEY,"
+                "        identifier TEXT UNIQUE NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
                 "    Measurements ("
                 "        measurement_id INTEGER PRIMARY KEY,"
-                "        meter_id"
-                "            REFERENCES Metering(meter_id)"
+                "        metric_id"
+                "            REFERENCES Metrics(metric_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        eval_id"
@@ -143,10 +139,10 @@ class Database:
                 "            REFERENCES Poses(pose_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
-                "        value FLOAT NOT NULL,"
+                "        value REAL NOT NULL,"
                 "        UNIQUE("
-                "            meter_id,"
-                "            eval_id"
+                "            metric_id,"
+                "            pose_id"
                 "        )"
                 "    );"
         )
@@ -293,3 +289,38 @@ class Database:
 
         conn.commit()
         return pose_id
+
+    def register_metric(self, identifier):
+        if identifier not in self._metric_ids:
+            conn = self.conn
+            cursor = conn.execute(
+                "INSERT INTO"
+                "    Metrics ("
+                "        identifier"
+                "    ) "
+                "VALUES (?);",
+                (identifier,)
+            )
+            self._metric_ids[identifier] = cursor.lastrowid
+            conn.commit()
+
+        return self._metric_ids[identifier]
+
+    def register_measurements(self, eval_id, metric_list, pose_id_list, measurements):
+        conn = self.conn
+        cursor = conn.cursor()
+        for identifier, values_list in zip(metric_list, measurements):
+            for pose_id, value in zip(pose_id_list, values_list):
+                cursor.execute(
+                    "INSERT OR REPLACE INTO"
+                    "    Measurements ("
+                    "        metric_id,"
+                    "        eval_id,"
+                    "        pose_id,"
+                    "        value"
+                    "    ) "
+                    "VALUES (?, ?, ?, ?);",
+                    (self._metric_ids[identifier], eval_id, pose_id, float(value))
+                )
+
+        conn.commit()

@@ -5,6 +5,7 @@
 from gdee.variant import VariantBuilderFactory
 from gdee.modeling import ModelBuilderFactory
 from gdee.evaluator import EvaluatorFactory
+from gdee.measurement import MeasurerFactory
 from path import Path
 import os
 
@@ -23,6 +24,7 @@ class PipelineFactory:
         self.variant_parameters = {}
         self.model_parameters = {}
         self.evaluator_parameters = {}
+        self.measurements = []
 
     def make(self):
         self.pdb = Path(self.pdb).abspath()
@@ -47,6 +49,10 @@ class PipelineFactory:
         self.evaluator_parameters.update(self.programs)
         evaluator_factory.parameters = self.evaluator_parameters
         pipeline.add_task(evaluator_factory.make())
+
+        measurer_factory = MeasurerFactory()
+        measurer_factory.measurements = self.measurements
+        pipeline.add_task(measurer_factory.make())
 
         return pipeline
 

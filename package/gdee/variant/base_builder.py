@@ -37,6 +37,11 @@ class BaseBuilder:
     def save_results(self, data):
         variant_id = data["variant_id"]
         models = data["models"]
+        raw_metrics = data["measurements"]
+        metrics = list(raw_metrics.keys())
+
+        for identifier in metrics:
+            self.db.register_metric(identifier)
 
         for model_idx in range(len(models["pdbs"])):
             model_id = self.db.register_model(
@@ -59,4 +64,12 @@ class BaseBuilder:
             pose_id_list = self.db.register_poses(
                 eval_id,
                 eval_data["energies"]
+            )
+
+            measurements = [raw_metrics[name][model_idx] for name in metrics]
+            self.db.register_measurements(
+                eval_id,
+                metrics,
+                pose_id_list,
+                measurements
             )
