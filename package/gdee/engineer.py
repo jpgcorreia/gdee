@@ -53,7 +53,7 @@ class ProteinEngineering:
         platform.run()
 
         if self._terminate:
-            raise RuntimeError("Processing interrupted by a system signal")
+            raise RuntimeError("Processing interrupted by a system signal. Everything should be fine")
 
     def catch_signals(self, signal, frame):
         self._terminate = True

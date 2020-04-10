@@ -73,3 +73,5 @@ class BaseBuilder:
                 pose_id_list,
                 measurements
             )
+
+        print("Ended with variant '{}'".format(data["variant"].name))
