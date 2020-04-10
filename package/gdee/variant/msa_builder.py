@@ -4,9 +4,13 @@
 
 from .sequence import ProtSeq
 from .base_builder import BaseBuilder
-from Bio import SeqIO, Align
-from Bio.Align import substitution_matrices
 import re
+import warnings
+
+from Bio import SeqIO, Align, BiopythonWarning
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", BiopythonWarning)
+    from Bio.Align import substitution_matrices
 
 
 def get_valid_filename(name):

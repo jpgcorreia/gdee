@@ -7,6 +7,7 @@ import modeller as mdl
 import MDAnalysis as mda
 from modeller import automodel
 import shutil
+import contextlib
 from tempfile import TemporaryDirectory
 
 
@@ -67,10 +68,6 @@ class ModellerBuilder:
             sequence="model",
         )
 
-        model.select_opt_residues(
-            job_data["mut_index"],
-            self.parameters["optimize_radius"]
-        )
         model.starting_model = 1
         model.ending_model = 3 * self.parameters["num_models"]
 
@@ -87,7 +84,15 @@ class ModellerBuilder:
             model.library_schedule = automodel.autosched.slow
             model.md_level = automodel.refine.very_slow
 
-        model.make()
+
+        with contextlib.redirect_stdout(None):
+            model.select_opt_residues(
+                job_data["mut_index"],
+                self.parameters["optimize_radius"]
+            )
+
+            model.make()
+
         model_data = [data for data in model.outputs if "molpdf" in data]
 
         return model_data
