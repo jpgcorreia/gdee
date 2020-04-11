@@ -64,10 +64,12 @@ class PDBQT:
 
                 elif trimmed.startswith("ENDMDL"):
                     first_pass = False
-                    self.models.append(DockingModel(coords, energy))
+                    if coords:
+                        self.models.append(DockingModel(coords, energy))
 
             if not has_models:
-                self.models.append(DockingModel(coords, energy))
+                if coords:
+                    self.models.append(DockingModel(coords, energy))
 
     def write_pdb(self, filename):
         with open(filename, "w") as fd:

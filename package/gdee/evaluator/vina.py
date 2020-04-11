@@ -43,15 +43,19 @@ class BaseVina:
 
                 # Process and save results
                 pdbqt = PDBQT("results.pdbqt")
-                results_pdb = "docking_{:04d}.pdb".format(idx)
-                pdbqt.write_pdb(job_dir / results_pdb)
+                if pdbqt.size():
+                    results_pdb = "docking_{:04d}.pdb".format(idx)
+                    pdbqt.write_pdb(job_dir / results_pdb)
 
-                docking_data.append({
-                    "ligand_file": ligand_file,
-                    "method": self.name,
-                    "pdb": results_pdb,
-                    "energies": [model.energy for model in pdbqt]
-                })
+                    docking_data.append({
+                        "ligand_file": ligand_file,
+                        "method": self.name,
+                        "pdb": results_pdb,
+                        "energies": [model.energy for model in pdbqt]
+                    })
+
+                else:
+                    job_data["fatal_error"] = True
 
         job_data["evaluations"] = docking_data
 

@@ -110,7 +110,8 @@ class Pipeline:
                 self._variant_builder.remove_variant(result)
                 print("Error while processing variant: {}".format(result["variant"].name))
 
-            self._variant_builder.save_results(result)
+            else:
+                self._variant_builder.save_results(result)
 
     def terminate(self):
         self._terminate = True
