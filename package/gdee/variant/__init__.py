@@ -5,6 +5,7 @@
 from ..database import Database
 from .msa_builder import MSABuilder
 from .mutation_builder import MutationBuilder
+from .exhaustive_builder import ExhaustiveBuilder
 
 
 __all__ = ["VariantBuilderFactory"]
@@ -26,6 +27,9 @@ class VariantBuilderFactory:
 
         elif name == "mutation":
             return MutationBuilder(self.parameters, database)
+
+        elif name == "exhaustive":
+            return ExhaustiveBuilder(self.parameters, database)
 
         else:
             raise RuntimeError("Variant builder '{}' does not exists.".format(name))
