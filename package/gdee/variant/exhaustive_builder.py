@@ -7,6 +7,39 @@ from .sequence import BLOSUM62_AA, ResidueIndex
 import itertools
 
 
+class CombinatorialMutation:
+    def __init__(self, size, data_size):
+        self.k = size
+        self.data_size = data_size
+        self.index_iter = itertools.combinations(range(data_size), self.k)
+        self.indices = []
+        self.mutations = None
+        self.stop = False
+        self.change_group()
+
+    def change_group(self):
+        self.mutations = itertools.product(BLOSUM62_AA[:-4], repeat=self.k)
+        try:
+            self.indices = next(self.index_iter)
+        except StopIteration:
+            self.stop = True
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            mutations = next(self.mutations)
+        except StopIteration:
+            self.change_group()
+            mutations = next(self.mutations)
+
+        if self.stop:
+            raise StopIteration()
+
+        return zip(self.indices, mutations)
+
+
 class ExhaustiveBuilder(BaseBuilder):
     def __init__(self, parameters, database):
         super().__init__(parameters, database)
@@ -27,6 +60,13 @@ class ExhaustiveBuilder(BaseBuilder):
         self.mut_index = [res.index for res in self.variant_sel]
         self.mut_index.sort()
 
+        size = len(self.wildtype_sel)
+        k = self.parameters["combinations"]
+        if k > 0 and k < size:
+            self.combinations = CombinatorialMutation(k, size)
+        else:
+            self.combinations = CombinatorialMutation(size, size)
+
     def mutations(self):
         mutations = []
         for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
@@ -35,20 +75,22 @@ class ExhaustiveBuilder(BaseBuilder):
 
         return "|".join(mutations)
 
-    def fetch_next_job(self):
-        if self.combinations is None:
-            self.combinations = itertools.product(BLOSUM62_AA[:-4], repeat=len(self.variant_sel))
+    def apply_mutations(self, rules):
+        # Clear previous mutations that won't be selected
+        for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
+            mut_res.code = wt_res.code
 
+        for pos, new_code in rules:
+            self.variant_sel[pos].code = new_code
+
+    def fetch_next_job(self):
         mut_name = self.mutations()
 
         while self.db.variant_exists(self.prot_id, mut_name):
             try:
-                mutations = next(self.combinations)
+                self.apply_mutations(next(self.combinations))
             except StopIteration:
                 return None
-
-            for mut_res, new_code in zip(self.variant_sel, mutations):
-                mut_res.code = new_code
 
             mut_name = self.mutations()
 
