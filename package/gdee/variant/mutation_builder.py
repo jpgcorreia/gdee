@@ -32,10 +32,13 @@ class MutationBuilder(BaseBuilder):
         for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
             mut_res.code = wt_res.code
 
+        if self.combinations is None:
+            return self.wildtype_sel, self.variant_sel
+
         indices = next(self.combinations)
         wildtype = tuple(self.wildtype_sel[i] for i in indices)
         variant = tuple(self.variant_sel[i] for i in indices)
-        return (wildtype, variant)
+        return zip(wildtype, variant)
 
     def special_initialize(self):
         self.variant = self.protein.copy()
@@ -49,8 +52,9 @@ class MutationBuilder(BaseBuilder):
         for wt, mut in zip(self.wildtype_sel, self.variant_sel):
             assert wt == mut # Order check
 
-        if self.combinations_size > 0:
-            self.combinations = itertools.cycle(itertools.combinations(range(len(self.variant_sel)), self.combinations_size))
+        size = len(self.variant_sel)
+        if self.combinations_size > 0 and self.combinations_size < size:
+            self.combinations = itertools.cycle(itertools.combinations(range(size), self.combinations_size))
 
         else:
             self.combinations = None
@@ -73,7 +77,7 @@ class MutationBuilder(BaseBuilder):
         mut_name = self.mutations()
 
         while self.db.variant_exists(self.prot_id, mut_name):
-            for wt_res, mut_res in zip(*self.next_sel()):
+            for wt_res, mut_res in self.next_sel():
                 mut_res.code = self.matrix.mutate(wt_res.code, self.invert_weights)
 
             mut_name = self.mutations()
