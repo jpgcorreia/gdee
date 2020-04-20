@@ -68,7 +68,10 @@ class MutationBuilder(BaseBuilder):
             if wt_res.code != mut_res.code:
                 mutations.append("{}:{}{}{}".format(wt_res.chain, wt_res.code, wt_res.resid, mut_res.code))
 
-        return "|".join(mutations)
+        if mutations:
+            return "|".join(mutations)
+
+        return self.protein.name
 
     def fetch_next_job(self):
         if self.iterations >= self.max_iter:

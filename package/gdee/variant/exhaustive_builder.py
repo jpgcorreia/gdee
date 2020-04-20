@@ -73,7 +73,10 @@ class ExhaustiveBuilder(BaseBuilder):
             if wt_res.code != mut_res.code:
                 mutations.append("{}:{}{}{}".format(wt_res.chain, wt_res.code, wt_res.resid, mut_res.code))
 
-        return "|".join(mutations)
+        if mutations:
+            return "|".join(mutations)
+
+        return self.protein.name
 
     def apply_mutations(self, rules):
         # Clear previous mutations that won't be selected
