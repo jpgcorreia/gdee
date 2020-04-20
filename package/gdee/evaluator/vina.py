@@ -67,6 +67,7 @@ class BaseVina:
             self.prepare_receptor,
             "-r", "model.pdb",
             "-o", "model.pdbqt",
+            "-A", "checkhydrogens",
         ]
 
         external_command(command, job_data["variant"].name)
