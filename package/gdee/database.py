@@ -117,6 +117,7 @@ class Database:
                 "CREATE TABLE IF NOT EXISTS"
                 "    Metrics ("
                 "        metric_id INTEGER PRIMARY KEY,"
+                "        name TEXT UNIQUE NOT NULL,"
                 "        identifier TEXT UNIQUE NOT NULL"
                 "    );"
                 ""
@@ -278,8 +279,8 @@ class Database:
         conn.commit()
         return pose_id
 
-    def register_metric(self, identifier):
-        if identifier not in self._metric_ids:
+    def register_metric(self, name, identifier):
+        if name not in self._metric_ids:
             conn = self.conn
             cursor = conn.execute(
                 "SELECT"
@@ -287,32 +288,33 @@ class Database:
                 "FROM"
                 "    Metrics "
                 "WHERE"
-                "    identifier = ?;",
-                (identifier,)
+                "    name = ?;",
+                (name,)
             )
             data = cursor.fetchall()
             if data:
-                self._metric_ids[identifier] = data[0][0]
+                self._metric_ids[name] = data[0][0]
 
             else:
                 cursor = conn.execute(
                     "INSERT INTO"
                     "    Metrics ("
+                    "        name,"
                     "        identifier"
                     "    ) "
-                    "VALUES (?);",
-                    (identifier,)
+                    "VALUES (?, ?);",
+                    (name, identifier)
                 )
-                self._metric_ids[identifier] = cursor.lastrowid
+                self._metric_ids[name] = cursor.lastrowid
                 conn.commit()
 
-        return self._metric_ids[identifier]
+        return self._metric_ids[name]
 
     def register_measurements(self, eval_id, metric_list, pose_id_list, measurements):
         conn = self.conn
         cursor = conn.cursor()
-        for identifier, values_list in zip(metric_list, measurements):
-            metric_id = self._metric_ids[identifier]
+        for name, values_list in zip(metric_list, measurements):
+            metric_id = self._metric_ids[name]
 
             for pose_id, value in zip(pose_id_list, values_list):
                 cursor.execute(

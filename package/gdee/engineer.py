@@ -28,8 +28,8 @@ class ProteinEngineering:
         self._terminate = False
         signal.signal(signal.SIGTERM, self.catch_signals)
 
-    def add_measurement(self, metric, protein_sel, ligand_sel):
-        self._measurements.append((metric, protein_sel, ligand_sel))
+    def add_measurement(self, name, metric, protein_sel, ligand_sel):
+        self._measurements.append((name, metric, protein_sel, ligand_sel))
 
     def run(self):
         pipeline_factory = PipelineFactory()

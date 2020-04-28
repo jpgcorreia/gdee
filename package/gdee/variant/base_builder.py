@@ -38,10 +38,12 @@ class BaseBuilder:
         variant_id = data["variant_id"]
         models = data["models"]
         raw_metrics = data["measurements"]
-        metrics = list(raw_metrics.keys())
+        metrics = tuple(raw_metrics.keys())
 
-        for identifier in metrics:
-            self.db.register_metric(identifier)
+        metric_names = []
+        for name, identifier in metrics:
+            self.db.register_metric(name, identifier)
+            metric_names.append(name)
 
         for model_idx in range(len(models["pdbs"])):
             model_id = self.db.register_model(
@@ -66,10 +68,10 @@ class BaseBuilder:
                 eval_data["energies"]
             )
 
-            measurements = [raw_metrics[name][model_idx] for name in metrics]
+            measurements = [raw_metrics[key][model_idx] for key in metrics]
             self.db.register_measurements(
                 eval_id,
-                metrics,
+                metric_names,
                 pose_id_list,
                 measurements
             )

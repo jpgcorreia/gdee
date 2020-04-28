@@ -18,9 +18,9 @@ class MeasurerFactory:
 
     def make(self):
         measurer = Measurer()
-        for name, prot_sel, lig_sel in self.measurements:
-            if name in self.metrics:
-                measurer.add(self.metrics[name](), prot_sel, lig_sel)
+        for name, metric, prot_sel, lig_sel in self.measurements:
+            if metric in self.metrics:
+                measurer.add(self.metrics[metric](), name, prot_sel, lig_sel)
 
             else:
                 raise RuntimeError("Measurement category '{}' does not exists.".format(name))

@@ -7,8 +7,9 @@ import MDAnalysis as mda
 
 
 class Task:
-    def __init__(self, metric, prot_text, lig_text):
-        self.name = "{}|{}|{}".format(metric.name(), prot_text, lig_text)
+    def __init__(self, metric, name, prot_text, lig_text):
+        self.name = name
+        self.identifier = "{}|{}|{}".format(metric.name(), prot_text, lig_text)
         self.metric = metric
         self.prot_text = prot_text
         self.lig_text = lig_text
@@ -32,12 +33,17 @@ class Task:
 
 class Measurer:
     def __init__(self):
-        # Use a dict to avoid repeated measurements
         self.task_list = {}
+        # Avoid repeated measurements
+        self.task_names = set()
 
-    def add(self, metric, prot_sel, lig_sel):
-        task = Task(metric, prot_sel, lig_sel)
-        self.task_list[task.name] = task
+    def add(self, metric, name, prot_sel, lig_sel):
+        if name in self.task_names:
+            raise RuntimeError("Repeat of measurement '{}'".format(name))
+
+        self.task_names.add(name)
+        task = Task(metric, name, prot_sel, lig_sel)
+        self.task_list[(task.name, task.identifier)] = task
 
     def run(self, job_data):
         if "models" not in job_data or "pdbs" not in job_data["models"] \
