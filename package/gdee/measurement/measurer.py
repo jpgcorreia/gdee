@@ -32,6 +32,7 @@ class Task:
 
 class Measurer:
     def __init__(self):
+        # Use a dict to avoid repeated measurements
         self.task_list = {}
 
     def add(self, metric, prot_sel, lig_sel):

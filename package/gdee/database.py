@@ -111,11 +111,7 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        pdb_index INTEGER NOT NULL,"
-                "        energy FLOAT NOT NULL,"
-                "        UNIQUE("
-                "            eval_id,"
-                "            pdb_index"
-                "        )"
+                "        energy FLOAT NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
@@ -131,19 +127,11 @@ class Database:
                 "            REFERENCES Metrics(metric_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
-                "        eval_id"
-                "            REFERENCES Evaluations(eval_id)"
-                "                ON DELETE CASCADE"
-                "                ON UPDATE CASCADE,"
                 "        pose_id"
                 "            REFERENCES Poses(pose_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
-                "        value REAL NOT NULL,"
-                "        UNIQUE("
-                "            metric_id,"
-                "            pose_id"
-                "        )"
+                "        value REAL NOT NULL"
                 "    );"
         )
 
@@ -324,17 +312,18 @@ class Database:
         conn = self.conn
         cursor = conn.cursor()
         for identifier, values_list in zip(metric_list, measurements):
+            metric_id = self._metric_ids[identifier]
+
             for pose_id, value in zip(pose_id_list, values_list):
                 cursor.execute(
-                    "INSERT OR REPLACE INTO"
+                    "INSERT INTO"
                     "    Measurements ("
                     "        metric_id,"
-                    "        eval_id,"
                     "        pose_id,"
                     "        value"
                     "    ) "
-                    "VALUES (?, ?, ?, ?);",
-                    (self._metric_ids[identifier], eval_id, pose_id, float(value))
+                    "VALUES (?, ?, ?);",
+                    (metric_id, pose_id, float(value))
                 )
 
         conn.commit()
