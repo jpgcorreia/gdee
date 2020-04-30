@@ -27,7 +27,7 @@ class ProteinEngineering:
         self._measurements = []
         self._pipeline = None
         self._terminate = False
-        signal.signal(signal.SIGTERM, self.catch_signals)
+        signal.signal(signal.SIGUSR1, self.catch_signals)
 
     def add_measurement(self, name, metric, protein_sel, ligand_sel):
         self._measurements.append((name, metric, protein_sel, ligand_sel))
@@ -61,4 +61,4 @@ class ProteinEngineering:
         self.pipeline.terminate()
         hostname = socket.gethostname()
         pid = os.getpid()
-        print("\nProcess {} on {} caught a termination signal. Finalizing all workers. This may take some time\n".format(pid, hostname))
+        print("\nProcess {} on {} caught a user termination signal. Finalizing all workers. This may take some time\n".format(pid, hostname))
