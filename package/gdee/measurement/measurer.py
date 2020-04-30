@@ -67,7 +67,7 @@ class Measurer:
 
             else:
                 print("Could not apply measurement '{}' to variant '{}'".format(
-                          name, job_data["variant"].name))
+                          name[0], job_data["variant"].name))
 
         models = job_data["models"]["pdbs"]
         evaluations = job_data["evaluations"]

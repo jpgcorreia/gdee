@@ -6,6 +6,7 @@ from gdee.pipeline import PipelineFactory
 from gdee.platform import PlatformFactory
 import os
 import signal
+import socket
 
 
 __all__ = ["ProteinEngineering"]
@@ -58,4 +59,6 @@ class ProteinEngineering:
     def catch_signals(self, signal, frame):
         self._terminate = True
         self.pipeline.terminate()
-        print("\nCaught termination signal. Finalizing all workers. This may take some time\n")
+        hostname = socket.gethostname()
+        pid = os.getpid()
+        print("\nProcess {} on {} caught a termination signal. Finalizing all workers. This may take some time\n".format(pid, hostname))
