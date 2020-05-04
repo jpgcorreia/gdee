@@ -77,3 +77,5 @@ class BaseBuilder:
             )
 
         print("Ended with variant '{}'".format(data["variant"].name))
+
+        return True

@@ -7,6 +7,7 @@ from gdee.modeling import ModelBuilderFactory
 from gdee.evaluator import EvaluatorFactory
 from gdee.measurement import MeasurerFactory
 from path import Path
+import tarfile
 import os
 
 
@@ -29,8 +30,10 @@ class PipelineFactory:
     def make(self):
         self.pdb = Path(self.pdb).abspath()
         pipeline = Pipeline()
-        pipeline.work_dir = Path(self.work_dir).abspath() / "files"
+        base_dir = Path(self.work_dir).abspath()
+        pipeline.work_dir = base_dir / "files"
         pipeline.work_dir.makedirs_p()
+        pipeline.archive = base_dir / "files.tar"
 
         variant_factory = VariantBuilderFactory()
         self.variant_parameters["db_file"] = self.db_file
@@ -60,7 +63,8 @@ class PipelineFactory:
 class Pipeline:
     def __init__(self):
         self.database = None
-        self.work_dir = Path()
+        self.work_dir = Path().abspath()
+        self.archive = "files.tar"
         self._variant_builder = None
         self.task_list = []
         self._terminate = False
@@ -105,13 +109,16 @@ class Pipeline:
         return job_data
 
     def save_results(self, data):
-        for result in data:
-            if result["fatal_error"]:
-                self._variant_builder.remove_variant(result)
-                print("Error while processing variant: {}".format(result["variant"].name))
+        with tarfile.open(self.archive, "a") as tar:
+            for result in data:
+                if result["fatal_error"]:
+                    self._variant_builder.remove_variant(result)
+                    print("Error while processing variant: {}".format(result["variant"].name))
 
-            else:
-                self._variant_builder.save_results(result)
+                else:
+                    self._variant_builder.save_results(result)
+                    tar.add(result["job_dir"], result["variant_dir"])
+                    result["job_dir"].rmtree_p()
 
     def terminate(self):
         self._terminate = True
