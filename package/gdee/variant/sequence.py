@@ -222,6 +222,9 @@ class ResidueIndex:
     def update(self):
         input_sel = defaultdict(set)
 
+        if not self.sel_text:
+            return
+
         for residue in self.sel_text.split(" "):
             chain, resid = residue.split(":")
             input_sel[chain].add(int(resid))

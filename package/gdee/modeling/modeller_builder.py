@@ -88,6 +88,7 @@ class ModellerBuilder:
         with contextlib.redirect_stdout(None):
             model.select_opt_residues(
                 job_data["mut_index"],
+                job_data["fixed_index"],
                 self.parameters["optimize_radius"]
             )
 
@@ -114,15 +115,20 @@ class ModellerBuilder:
 
 
 class MutationModel(automodel.automodel):
-    def select_opt_residues(self, residues, coff):
+    def select_opt_residues(self, residues, excluded, coff):
         self._opt_residues = tuple(map(int, residues))
+        self._opt_residues_excluded = tuple(map(int, excluded))
         self._opt_residues_coff = coff
 
     def select_atoms(self):
         if not self._opt_residues or self._opt_residues_coff == 0:
-            return mdl.selection(self.residues)
+            sel = mdl.selection(self.residues)
 
-        res = [self.residues[pos] for pos in self._opt_residues]
-        sel = mdl.selection(res)
+        else:
+            res = [self.residues[pos] for pos in self._opt_residues]
+            sel = mdl.selection(res).select_sphere(self._opt_residues_coff).by_residue()
 
-        return sel.select_sphere(self._opt_residues_coff).by_residue()
+        excluded_res = [self.residues[pos] for pos in self._opt_residues_excluded]
+        excluded = mdl.selection(excluded_res).by_residue()
+
+        return sel - excluded

@@ -59,6 +59,13 @@ class MutationBuilder(BaseBuilder):
         else:
             self.combinations = None
 
+        fixed = ResidueIndex(self.protein, self.parameters["fixed"])
+        fixed_sel = fixed.apply(self.protein)
+        for res in fixed_sel:
+            if res in self.wildtype_sel:
+                raise RuntimeError("Residue {}:{} marked as fixed and mutable".format(res.chain, res.resid))
+
+        self.fixed_index = [res.index for res in fixed_sel]
         self.mut_index = [res.index for res in self.variant_sel]
         self.mut_index.sort()
 
@@ -102,6 +109,7 @@ class MutationBuilder(BaseBuilder):
             "variant_id": variant_id,
             "wildtype": self.protein.copy(),
             "variant": variant,
-            "mut_index": self.mut_index.copy()
+            "mut_index": self.mut_index.copy(),
+            "fixed_index": self.fixed_index.copy()
         }
         return job
