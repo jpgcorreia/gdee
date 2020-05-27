@@ -33,7 +33,7 @@ class MutationBuilder(BaseBuilder):
             mut_res.code = wt_res.code
 
         if self.combinations is None:
-            return self.wildtype_sel, self.variant_sel
+            return zip(self.wildtype_sel, self.variant_sel)
 
         indices = next(self.combinations)
         wildtype = tuple(self.wildtype_sel[i] for i in indices)
