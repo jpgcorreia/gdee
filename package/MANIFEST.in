@@ -8,6 +8,7 @@ global-include *.py
 graft third-party
 include README INSTALL CHANGELOG LICENSE AUTHORS SUMMARY.txt
 include setup.py
+include gdee/data/*
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude *.pyd

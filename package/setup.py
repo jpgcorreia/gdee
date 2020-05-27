@@ -36,4 +36,5 @@ setup(
     ext_package = "gdee",
     # ext_modules = extensions,
     install_requires = ["numpy>=1.14", "mdanalysis>=0.20", "mpi4py>=3.0", "path>=13.0", "biopython>=1.75"],
+    package_data={"gdee": ["data/blosum_all.npz"]},
 )

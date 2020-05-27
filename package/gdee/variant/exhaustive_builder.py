@@ -3,7 +3,7 @@
 
 
 from .base_builder import BaseBuilder
-from .sequence import BLOSUM62_AA, ResidueIndex
+from .sequence import Blosum, ResidueIndex
 import itertools
 
 
@@ -18,7 +18,7 @@ class CombinatorialMutation:
         self.change_group()
 
     def change_group(self):
-        self.mutations = itertools.product(BLOSUM62_AA[:-4], repeat=self.k)
+        self.mutations = itertools.product(Blosum()[62][0], repeat=self.k)
         try:
             self.indices = next(self.index_iter)
         except StopIteration:

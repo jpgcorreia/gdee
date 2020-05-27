@@ -4,10 +4,12 @@
 
 import numpy as np
 import MDAnalysis as mda
+import io
 import os
 import copy
 import random
 import string
+import pkgutil
 import itertools
 from collections import defaultdict
 
@@ -261,25 +263,24 @@ class MatrixMutation:
         # Store normalized individual weights
         for idx, code in enumerate(self._aa):
             aa_weights = weights[idx, :]
+            aa_weights /= aa_weights.sum()
+            inverted_weights = np.reciprocal(aa_weights)
+            inverted_weights /= inverted_weights.sum()
 
             if inverted:
-                self._weights[code] = [
-                    non_negative(np.max(aa_weights) - aa_weights),
-                    non_negative(aa_weights)
-                ]
+                # When non-conservative has higher probabilities
+                self._weights[code] = [inverted_weights, aa_weights]
 
             else:
-                self._weights[code] = [
-                    non_negative(aa_weights),
-                    non_negative(np.max(aa_weights) - aa_weights)
-                ]
+                # When conservative has higher probabilities
+                self._weights[code] = [aa_weights, inverted_weights]
 
-    def mutate(self, aa, invert=False):
+    def mutate(self, aa, conservative=True):
         wild_aa = three_to_one(aa)
-        if invert:
-            weights = self._weights[wild_aa][1]
-        else:
+        if conservative:
             weights = self._weights[wild_aa][0]
+        else:
+            weights = self._weights[wild_aa][1]
 
         return random.choices(self._aa, weights, k=1)[0]
 
@@ -287,33 +288,26 @@ class MatrixMutation:
 class Blosum62Mutation(MatrixMutation):
     def __init__(self):
         # Include only usual amino acids
-        super().__init__(BLOSUM62_AA[:-4], BLOSUM62[:-4, :-4], False)
+        aminoacids, blosum = Blosum()[62]
+        super().__init__(aminoacids, blosum, False)
 
 
-BLOSUM62_AA ="A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "B", "Z", "X", "*"
+class Blosum:
+    __data = None
 
+    def __init__(self):
+        if Blosum.__data is None:
+            # Load only once
+            stream = io.BytesIO()
+            stream.write(pkgutil.get_data("gdee", "data/blosum_all.npz"))
+            stream.seek(0)
+            file = np.load(stream)
+            self.__data = {}
 
-BLOSUM62 = np.array([[ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1, 0, -3, -2,  0, -2, -1,  0, -4],
-[-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3, -1,  0, -1, -4],
-[-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1, 0, -4, -2, -3,  3,  0, -1, -4],
-[-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3,  4,  1, -1, -4],
-[ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, -3, -3, -2, -4],
-[-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2,  0,  3, -1, -4],
-[-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1, -4],
-[ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3, -1, -2, -1, -4],
-[-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3,  0,  0, -1, -4],
-[-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3, -3, -3, -1, -4],
-[-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1, -4, -3, -1, -4],
-[-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2,  0,  1, -1, -4],
-[-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1, -3, -1, -1, -4],
-[-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1, -3, -3, -1, -4],
-[-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2, -2, -1, -2, -4],
-[ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4, 1, -3, -2, -2,  0,  0,  0, -4],
-[ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1, 5, -2, -2,  0, -1, -1,  0, -4],
-[-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3, -4, -3, -2, -4],
-[-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1, -3, -2, -1, -4],
-[ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2, 0, -3, -1,  4, -3, -2, -1, -4],
-[-2, -1,  3,  4, -3,  0,  1, -1,  0, -3, -4,  0, -3, -3, -2,  0, -1, -4, -3, -3,  4,  1, -1, -4],
-[-1,  0,  0,  1, -3,  3,  4, -2,  0, -3, -3,  1, -1, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1, -4],
-[ 0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,  0, 0, -2, -1, -1, -1, -1, -1, -4],
-[-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4,  1]], dtype="float64")
+            for name in file.files:
+                self.__data[name] = file[name]
+
+    def __getitem__(self, key):
+        aa = self.__data["aminoacids_{}".format(key)]
+        matrix = self.__data["prob_{}".format(key)]
+        return aa, matrix
