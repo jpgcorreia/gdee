@@ -102,7 +102,7 @@ class MutationBuilder(BaseBuilder):
             mut_name,
             self.variant.to_modeller(),
             variant_dir,
-            False if mut_name else True
+            mut_name == self.protein.name
         )
         variant = self.variant.copy()
         variant.name = mut_name
