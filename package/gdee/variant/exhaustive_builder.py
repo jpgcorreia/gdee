@@ -91,18 +91,21 @@ class ExhaustiveBuilder(BaseBuilder):
             mut_res.code = wt_res.code
 
         for pos, new_code in rules:
-            self.variant_sel[pos].code = new_code
+            res = self.variant_sel[pos]
+
+            if not self.is_excluded(res, new_code):
+                res.code = new_code
 
     def fetch_next_job(self):
-        mut_name = self.mutations()
+        while True:
+            mut_name = self.mutations()
+            if not self.db.variant_exists(self.prot_id, mut_name):
+                break
 
-        while self.db.variant_exists(self.prot_id, mut_name):
             try:
                 self.apply_mutations(next(self.combinations))
             except StopIteration:
                 return None
-
-            mut_name = self.mutations()
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
         variant_id = self.db.register_variant(

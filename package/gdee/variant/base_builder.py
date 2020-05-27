@@ -12,6 +12,11 @@ class BaseBuilder:
         self._initialized = False
         self.prot_id = None
         self.protein = None
+        self._excluded = parameters["excluded"]
+
+    def is_excluded(self, residue, code):
+        key = "{}:{}".format(residue.chain, residue.resid)
+        return code in self._excluded.get(key, "")
 
     def initialize(self):
         self._initialized = True

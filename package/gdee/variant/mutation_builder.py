@@ -84,13 +84,17 @@ class MutationBuilder(BaseBuilder):
         if self.iterations >= self.max_iter:
             return None
 
-        mut_name = self.mutations()
-
-        while self.db.variant_exists(self.prot_id, mut_name):
-            for wt_res, mut_res in self.next_sel():
-                mut_res.code = self.matrix.mutate(wt_res.code, self.invert_weights)
-
+        while True:
             mut_name = self.mutations()
+            if not self.db.variant_exists(self.prot_id, mut_name):
+                break
+
+            for wt_res, mut_res in self.next_sel():
+                while True:
+                    code = self.matrix.mutate(wt_res.code, self.invert_weights)
+                    if not self.is_excluded(mut_res, code):
+                        mut_res.code = code
+                        break
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
         variant_id = self.db.register_variant(
