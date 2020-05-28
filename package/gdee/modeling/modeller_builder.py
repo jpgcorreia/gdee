@@ -31,7 +31,7 @@ class ModellerBuilder:
                 job_data["fatal_error"] = True
                 return job_data
 
-            model_data.sort(key=lambda x: x["molpdf"])
+            model_data.sort(key=lambda x: x["DOPE score"])
             top_models = model_data[:self.parameters["num_models"]]
 
             pdb_list = [model["name"] for model in top_models]
@@ -66,6 +66,7 @@ class ModellerBuilder:
             alnfile="alignment.ali",
             knowns="template",
             sequence="model",
+            assess_methods=(automodel.assess.DOPE),
         )
 
         model.starting_model = 1
@@ -94,7 +95,7 @@ class ModellerBuilder:
 
             model.make()
 
-        model_data = [data for data in model.outputs if "molpdf" in data]
+        model_data = [data for data in model.outputs if "DOPE score" in data]
 
         return model_data
 
