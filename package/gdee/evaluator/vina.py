@@ -3,7 +3,9 @@
 
 
 from .pdbqt import PDBQT
+import numpy as np
 from path import Path
+import MDAnalysis as mda
 import subprocess
 from tempfile import TemporaryDirectory, mkdtemp
 
@@ -38,7 +40,16 @@ class BaseVina:
 
         with temp_path:
             for idx, model_pdb in enumerate(job_data["models"]["pdbs"]):
-                (job_dir / model_pdb).copy(temp_path / "model.pdb")
+                protein = mda.Universe(str(job_dir / model_pdb))
+                pos = protein.atoms.positions
+                size = np.array(self.parameters["box_size"], np.float32) + 1
+                center = np.array(self.parameters["box_center"], np.float32)
+                upper = center + size
+                lower = center - size
+                atoms = np.all((pos <= upper) & (pos >= lower), axis=1)
+                smaller = protein.atoms[atoms].residues.atoms
+                smaller.write(str(temp_path / "model.pdb"))
+
                 self.run_docking(job_data)
 
                 # Process and save results
