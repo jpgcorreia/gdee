@@ -84,10 +84,15 @@ class MutationBuilder(BaseBuilder):
         if self.iterations >= self.max_iter:
             return None
 
+        max_tries = 20 * len(self.wildtype_sel) # We can only go linear
         while True:
             mut_name = self.mutations()
             if not self.db.variant_exists(self.prot_id, mut_name):
                 break
+
+            if max_tries == 0:
+                return None
+            max_tries -= 1
 
             for wt_res, mut_res in self.next_sel():
                 while True:
