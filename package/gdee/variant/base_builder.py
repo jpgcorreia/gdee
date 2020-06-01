@@ -13,6 +13,7 @@ class BaseBuilder:
         self.prot_id = None
         self.protein = None
         self._excluded = parameters["excluded"]
+        self._variants = set()
 
     def is_excluded(self, residue, code):
         key = "{}:{}".format(residue.chain, residue.resid)
@@ -36,11 +37,32 @@ class BaseBuilder:
     def fetch_next_job(self):
         raise NotImplementedError("Child classes must implement this method")
 
-    def remove_variant(self, data):
-        self.db.remove_variant(data["variant_id"])
+    def variant_exists(self, name):
+        if name in self._variants:
+            return True
+
+        return self.db.variant_exists(self.prot_id, name)
+
+    def new_variant(self, name):
+        if name in self._variants:
+            raise RuntimeError("Variant {} already exists".format(name))
+
+        self._variants.add(name)
 
     def save_results(self, data):
-        variant_id = data["variant_id"]
+        name = data["variant"].name
+        if data["fatal_error"]:
+            self._variants.remove(name)
+            print("Error while processing variant: {}".format(name))
+            return
+
+        variant_id = self.db.register_variant(
+                self.prot_id,
+                name,
+                data["variant"].to_modeller(),
+                data["variant_dir"],
+                data["is_wildtype"]
+        )
         models = data["models"]
         raw_metrics = data["measurements"]
         metrics = tuple(raw_metrics.keys())

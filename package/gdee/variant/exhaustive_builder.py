@@ -99,7 +99,7 @@ class ExhaustiveBuilder(BaseBuilder):
     def fetch_next_job(self):
         while True:
             mut_name = self.mutations()
-            if not self.db.variant_exists(self.prot_id, mut_name):
+            if not self.variant_exists(mut_name):
                 break
 
             try:
@@ -108,21 +108,15 @@ class ExhaustiveBuilder(BaseBuilder):
                 return None
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
-        variant_id = self.db.register_variant(
-            self.prot_id,
-            mut_name,
-            self.variant.to_modeller(),
-            variant_dir,
-            mut_name == self.protein.name
-        )
+        self.new_variant(mut_name)
         variant = self.variant.copy()
         variant.name = mut_name
 
         job = {
             "variant_dir": variant_dir,
-            "variant_id": variant_id,
             "wildtype": self.protein.copy(),
             "variant": variant,
+            "is_wildtype": mut_name == self.protein.name,
             "mut_index": self.mut_index.copy(),
             "fixed_index": self.fixed_index.copy()
         }

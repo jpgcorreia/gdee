@@ -87,7 +87,7 @@ class MutationBuilder(BaseBuilder):
         max_tries = 20 * len(self.wildtype_sel) # We can only go linear
         while True:
             mut_name = self.mutations()
-            if not self.db.variant_exists(self.prot_id, mut_name):
+            if not self.variant_exists(mut_name):
                 break
 
             if max_tries == 0:
@@ -102,21 +102,15 @@ class MutationBuilder(BaseBuilder):
                         break
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
-        variant_id = self.db.register_variant(
-            self.prot_id,
-            mut_name,
-            self.variant.to_modeller(),
-            variant_dir,
-            mut_name == self.protein.name
-        )
+        self.new_variant(mut_name)
         variant = self.variant.copy()
         variant.name = mut_name
         self.iterations += 1
 
         job = {
             "variant_dir": variant_dir,
-            "variant_id": variant_id,
             "wildtype": self.protein.copy(),
+            "is_wildtype": mut_name == self.protein.name,
             "variant": variant,
             "mut_index": self.mut_index.copy(),
             "fixed_index": self.fixed_index.copy()

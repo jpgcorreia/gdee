@@ -111,14 +111,8 @@ class Pipeline:
     def save_results(self, data):
         with tarfile.open(self.archive, "a") as tar:
             for result in data:
-                if result["fatal_error"]:
-                    self._variant_builder.remove_variant(result)
-                    print("Error while processing variant: {}".format(result["variant"].name))
-
-                else:
-                    self._variant_builder.save_results(result)
-                    tar.add(result["job_dir"], result["variant_dir"])
-
+                self._variant_builder.save_results(result)
+                tar.add(result["job_dir"], result["variant_dir"])
                 result["job_dir"].rmtree_p()
 
     def terminate(self):
