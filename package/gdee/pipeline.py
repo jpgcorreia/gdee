@@ -118,7 +118,8 @@ class Pipeline:
                 else:
                     self._variant_builder.save_results(result)
                     tar.add(result["job_dir"], result["variant_dir"])
-                    result["job_dir"].rmtree_p()
+
+                result["job_dir"].rmtree_p()
 
     def terminate(self):
         self._terminate = True
