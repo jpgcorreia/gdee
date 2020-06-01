@@ -96,15 +96,20 @@ class Pipeline:
         return job_list
 
     def run_pipeline(self, job_data):
-        job_dir = self.work_dir / job_data["variant_dir"]
-        job_dir.makedirs_p()
-        job_data["job_dir"] = job_dir
-        job_data["fatal_error"] = False
+        try:
+            job_dir = self.work_dir / job_data["variant_dir"]
+            job_dir.makedirs_p()
+            job_data["job_dir"] = job_dir
+            job_data["fatal_error"] = False
 
-        for step in self.task_list:
-            job_data = step.run(job_data)
-            if job_data["fatal_error"]:
-                return job_data
+            for step in self.task_list:
+                job_data = step.run(job_data)
+                if job_data["fatal_error"]:
+                    return job_data
+
+        except Exception as error:
+            job_data["fatal_error"] = True
+            print(error)
 
         return job_data
 
