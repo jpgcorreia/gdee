@@ -19,9 +19,10 @@ class VariantBuilderFactory:
         if self.parameters["pdb_file"] is None:
             raise RuntimeError("Invalid template PDB file.")
 
+        excludes = self.parameters["excluded"]
         all_excludes = self.parameters["excluded_all"]
-        for key in self.parameters["excluded"]:
-            self.parameters["excluded"][key] += all_excludes
+        for res in self.parameters["selection"].split():
+            excludes[res] = excludes.get(res, "") + all_excludes
 
         database = Database(self.parameters["db_file"])
 
