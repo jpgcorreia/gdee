@@ -28,7 +28,7 @@ def three_to_one(aa):
         return aa
 
     elif len(aa) == 3:
-        return SEQ_3_1.get(aa, "U")
+        return SEQ_3_1.get(aa, ".")
 
     else:
         raise ValueError("Unknown aminoacids notation")
@@ -39,7 +39,7 @@ def one_to_three(aa):
         return aa
 
     elif len(aa) == 1:
-        return SEQ_1_3.get(aa, "U")
+        return SEQ_1_3.get(aa, "BLK")
 
     else:
         raise ValueError("Unknown aminoacids notation")
@@ -56,6 +56,7 @@ class SeqPos:
         self.resid = int(resid)
         self._resname = "gap"
         self._gap = True
+        self._blk = False
         self._code = "-"
 
         if resname is not None:
@@ -81,6 +82,11 @@ class SeqPos:
         if value == "-":
             self._resname = "gap"
             self._gap = True
+
+        elif value == ".":
+            self._resname = "BLK"
+            self._gap = False
+            self._blk = True
 
         else:
             self._resname = one_to_three(value)
@@ -161,15 +167,14 @@ class ProtSeq:
 
     def _init_from_pdb(self):
         pdb = mda.Universe(str(self.input_file))
-        protein = pdb.select_atoms("protein")
 
         seq_idx = 0
-        for segment in protein.segments:
+        for segment in pdb.segments:
             chain = ChainSeq(segment.segid)
             self._chains.append(chain)
             self._chain_ids[segment.segid] = chain
 
-            for res in (segment.atoms & protein).residues:
+            for res in segment.atoms.residues:
                 chain.append(SeqPos(seq_idx, chain.code, res.resid, res.resname))
                 seq_idx += 1
 

@@ -16,6 +16,7 @@ class ModellerBuilder:
         self.parameters = parameters
         mdl.log.none()
         self.env = mdl.environ()
+        self.env.io.hetatm = True
         mdl.log.level(0, 0, 0, 0, 0)
 
     def run(self, job_data):
