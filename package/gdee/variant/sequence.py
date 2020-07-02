@@ -27,11 +27,7 @@ def three_to_one(aa):
     if len(aa) == 1:
         return aa
 
-    elif len(aa) == 3:
-        return SEQ_3_1.get(aa, ".")
-
-    else:
-        raise ValueError("Unknown aminoacids notation")
+    return SEQ_3_1.get(aa, ".")
 
 
 def one_to_three(aa):
