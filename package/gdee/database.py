@@ -78,7 +78,7 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        method TEXT NOT NULL,"
-                "        scores TEXT NOT NULL,"
+                "        score REAL NOT NULL,"
                 "        pdb_file TEXT NOT NULL"
                 "    );"
                 ""
@@ -93,12 +93,13 @@ class Database:
                 "            REFERENCES Models(model_id)"
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
+                "        ligand_name TEXT NOT NULL,"
                 "        ligand_file TEXT NOT NULL,"
                 "        method TEXT NOT NULL,"
                 "        pdb_file TEXT NOT NULL,"
                 "        UNIQUE("
                 "            model_id,"
-                "            ligand_file,"
+                "            ligand_name,"
                 "            method"
                 "        )"
                 "    );"
@@ -111,14 +112,14 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        pdb_index INTEGER NOT NULL,"
-                "        energy FLOAT NOT NULL"
+                "        energy REAL NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
                 "    Metrics ("
                 "        metric_id INTEGER PRIMARY KEY,"
                 "        name TEXT UNIQUE NOT NULL,"
-                "        identifier TEXT UNIQUE NOT NULL"
+                "        identifier TEXT NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
@@ -226,36 +227,38 @@ class Database:
 
         return cursor.lastrowid
 
-    def register_model(self, variant_id, method, scores, pdb_file):
+    def register_model(self, variant_id, method, score, pdb_file):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
             "    Models ("
             "        variant_id,"
             "        method,"
-            "        scores,"
+            "        score,"
             "        pdb_file"
             "    ) "
             "VALUES (?, ?, ?, ?);",
-            (variant_id, method, list_serialize(scores), pdb_file)
+            (variant_id, method, score, pdb_file)
         )
 
         conn.commit()
         return cursor.lastrowid
 
-    def register_evaluation(self, variant_id, model_id, ligand_file, method, pdb_file):
+    def register_evaluation(self, variant_id, model_id, evaluation):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
             "    Evaluations ("
             "        variant_id,"
             "        model_id,"
+            "        ligand_name,"
             "        ligand_file,"
             "        method,"
             "        pdb_file"
             "    ) "
-            "VALUES (?, ?, ?, ?, ?);",
-            (variant_id, model_id, ligand_file, method, pdb_file)
+            "VALUES (?, ?, ?, ?, ?, ?);",
+            (variant_id, model_id, evaluation.ligand_name,
+             evaluation.ligand_file, evaluation.method, evaluation.pdb)
         )
         return cursor.lastrowid
 
@@ -310,13 +313,12 @@ class Database:
 
         return self._metric_ids[name]
 
-    def register_measurements(self, eval_id, metric_list, pose_id_list, measurements):
-        conn = self.conn
-        cursor = conn.cursor()
-        for name, values_list in zip(metric_list, measurements):
-            metric_id = self._metric_ids[name]
+    def register_measurements(self, eval_id, pose_id_list, measurements):
+        cursor = self.conn.cursor()
+        for measurer in measurements:
+            metric_id = self.register_metric(measurer.name, measurer.identifier)
 
-            for pose_id, value in zip(pose_id_list, values_list):
+            for pose_id, value in zip(pose_id_list, measurer.data):
                 cursor.execute(
                     "INSERT INTO"
                     "    Measurements ("
@@ -328,4 +330,4 @@ class Database:
                     (metric_id, pose_id, float(value))
                 )
 
-        conn.commit()
+        self.conn.commit()

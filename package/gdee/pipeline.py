@@ -20,12 +20,11 @@ class PipelineFactory:
         self.programs = {}
         self.work_dir = None
         self.pdb = None
-        self.ligand_pdbqt = None
+        self.ligands = []
         self.db_file = None
         self.variant_parameters = {}
         self.model_parameters = {}
         self.evaluator_parameters = {}
-        self.measurements = []
 
     def make(self):
         self.pdb = Path(self.pdb).abspath()
@@ -47,15 +46,17 @@ class PipelineFactory:
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
 
-        evaluator_factory = EvaluatorFactory()
-        self.evaluator_parameters["ligand_pdbqt"] = self.ligand_pdbqt
         self.evaluator_parameters.update(self.programs)
-        evaluator_factory.parameters = self.evaluator_parameters
-        pipeline.add_task(evaluator_factory.make())
-
+        evaluator_factory = EvaluatorFactory()
         measurer_factory = MeasurerFactory()
-        measurer_factory.measurements = self.measurements
-        pipeline.add_task(measurer_factory.make())
+        for ligand in self.ligands:
+            evaluator_parameters = self.evaluator_parameters.copy()
+            evaluator_parameters["ligand"] = ligand
+            evaluator_factory.parameters = evaluator_parameters
+            pipeline.add_task(evaluator_factory.make())
+
+            measurer_factory.ligand = ligand
+            pipeline.add_task(measurer_factory.make())
 
         return pipeline
 
@@ -97,14 +98,14 @@ class Pipeline:
 
     def run_pipeline(self, job_data):
         try:
-            job_dir = self.work_dir / job_data["variant_dir"]
+            job_dir = self.work_dir / job_data.variant_dir
             job_dir.makedirs_p()
-            job_data["job_dir"] = job_dir
-            job_data["fatal_error"] = False
+            job_data.job_dir = job_dir
+            job_data.fatal_error = False
 
             for step in self.task_list:
                 job_data = step.run(job_data)
-                if job_data["fatal_error"]:
+                if job_data.fatal_error:
                     return job_data
 
         except Exception as error:
@@ -117,8 +118,8 @@ class Pipeline:
         with tarfile.open(self.archive, "a") as tar:
             for result in data:
                 self._variant_builder.save_results(result)
-                tar.add(result["job_dir"], result["variant_dir"])
-                result["job_dir"].rmtree_p()
+                tar.add(result.job_dir, result.variant_dir)
+                result.job_dir.rmtree_p()
 
     def terminate(self):
         self._terminate = True

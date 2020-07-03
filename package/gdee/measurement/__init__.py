@@ -11,14 +11,21 @@ __all__ = ["MeasurerFactory"]
 
 class MeasurerFactory:
     def __init__(self):
-        self.measurements = []
+        self.ligand = None
+        self.names = set()
         self.metrics = {
             EuclideanDistance.name(): EuclideanDistance,
         }
 
     def make(self):
-        measurer = Measurer()
-        for name, metric, prot_sel, lig_sel in self.measurements:
+        measurer = Measurer(self.ligand.name)
+
+        for name, metric, prot_sel, lig_sel in self.ligand.measurements:
+            # Sanity check
+            if name in self.names:
+                raise RuntimeError("Duplicate metric '{}'".format(name))
+            self.names.add(name)
+
             if metric in self.metrics:
                 measurer.add(self.metrics[metric](), name, prot_sel, lig_sel)
 

@@ -12,25 +12,39 @@ import socket
 __all__ = ["ProteinEngineering"]
 
 
+class Ligand:
+    def __init__(self, name, filename):
+        self.name = name
+        self.filename = filename
+        self.measurements = []
+
+    def add_measurement(self, name, metric, protein_sel, ligand_sel):
+        self.measurements.append((name, metric, protein_sel, ligand_sel))
+
+
 class ProteinEngineering:
     def __init__(self, protein_name, database):
         self.work_dir = os.getcwd()
         self.protein_name = protein_name
         self.db_file = database
         self.pdb = None
-        self.ligand_pdbqt = None
+        self.ligands = {}
         self.platform = {"name": "simple", "local_cpu": 1}
         self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina"}
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "fixed": "", "conservative": True, "max_iterations": 1000, "combinations": -1, "msa": "", "excluded": {}, "excluded_all": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
         self.evaluator = {"name": "vina", "exhaustiveness": 50}
-        self._measurements = []
         self._pipeline = None
         self._terminate = False
         signal.signal(signal.SIGUSR1, self.catch_signals)
 
-    def add_measurement(self, name, metric, protein_sel, ligand_sel):
-        self._measurements.append((name, metric, protein_sel, ligand_sel))
+    def add_ligand(self, name, filename):
+        if name in self.ligands:
+            raise RuntimeError("Ligand '{}' already exists".format(name))
+
+        ligand = Ligand(name, filename)
+        self.ligands[name] = ligand
+        return ligand
 
     def run(self):
         pipeline_factory = PipelineFactory()
@@ -38,12 +52,11 @@ class ProteinEngineering:
         pipeline_factory.programs = self.programs
         pipeline_factory.work_dir = self.work_dir
         pipeline_factory.pdb = self.pdb
-        pipeline_factory.ligand_pdbqt = self.ligand_pdbqt
+        pipeline_factory.ligands = tuple(self.ligands.values())
         pipeline_factory.db_file = self.db_file
         pipeline_factory.variant_parameters = self.variant
         pipeline_factory.model_parameters = self.model
         pipeline_factory.evaluator_parameters = self.evaluator
-        pipeline_factory.measurements = self._measurements
         self.pipeline = pipeline_factory.make()
 
         platform_factory = PlatformFactory()

@@ -2,9 +2,10 @@
 """
 
 
+import itertools
 from .base_builder import BaseBuilder
 from .sequence import Blosum, ResidueIndex
-import itertools
+from gdee.misc import DataContainer
 
 
 class CombinatorialMutation:
@@ -112,12 +113,12 @@ class ExhaustiveBuilder(BaseBuilder):
         variant = self.variant.copy()
         variant.name = mut_name
 
-        job = {
-            "variant_dir": variant_dir,
-            "wildtype": self.protein.copy(),
-            "variant": variant,
-            "is_wildtype": mut_name == self.protein.name,
-            "mut_index": self.mut_index.copy(),
-            "fixed_index": self.fixed_index.copy()
-        }
+        job = DataContainer()
+        job.variant_dir = variant_dir
+        job.wildtype = self.protein.copy()
+        job.variant = variant
+        job.is_wildtype = mut_name == self.protein.name
+        job.mut_index = self.mut_index.copy()
+        job.fixed_index = self.fixed_index.copy()
+
         return job

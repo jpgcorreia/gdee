@@ -2,12 +2,13 @@
 """
 
 
-from .pdbqt import PDBQT
 import numpy as np
 from path import Path
 import MDAnalysis as mda
 import subprocess
-from tempfile import TemporaryDirectory, mkdtemp
+from tempfile import TemporaryDirectory
+from .pdbqt import PDBQT
+from gdee.misc import DataContainer
 
 
 def external_command(arguments, name):
@@ -27,20 +28,19 @@ class BaseVina:
         self.parameters = parameters
         self.name = ""
         self.program = ""
+        self.ligand = parameters["ligand"]
         self.extra_arguments = []
         self.prepare_receptor = Path(parameters["mgltools"]) / "MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py"
 
     def run(self, job_data):
-        job_dir = job_data["job_dir"]
+        job_dir = job_data.job_dir
         temp_dir = TemporaryDirectory(prefix="gdee_docking")
         temp_path = Path(temp_dir.name)
-        ligand_file = self.parameters["ligand_pdbqt"]
-        Path(ligand_file).copy(temp_path / "ligand.pdbqt")
-        docking_data = []
+        Path(self.ligand.filename).copy(temp_path / "ligand.pdbqt")
 
         with temp_path:
-            for idx, model_pdb in enumerate(job_data["models"]["pdbs"]):
-                protein = mda.Universe(str(job_dir / model_pdb))
+            for idx, model in enumerate(job_data.modeling.models):
+                protein = mda.Universe(str(job_dir / model.pdb))
                 pos = protein.atoms.positions
                 size = np.array(self.parameters["box_size"], np.float32) + 1
                 center = np.array(self.parameters["box_center"], np.float32)
@@ -55,20 +55,23 @@ class BaseVina:
                 # Process and save results
                 pdbqt = PDBQT("results.pdbqt")
                 if pdbqt.size():
-                    results_pdb = "docking_{:04d}.pdb".format(idx)
+                    results_pdb = "docking_{}_{:04d}.pdb".format(self.ligand.name,
+                                                                 idx)
                     pdbqt.write_pdb(job_dir / results_pdb)
 
-                    docking_data.append({
-                        "ligand_file": ligand_file,
-                        "method": self.name,
-                        "pdb": results_pdb,
-                        "energies": [model.energy for model in pdbqt]
-                    })
+                    docking = DataContainer()
+                    docking.ligand_name = self.ligand.name
+                    docking.ligand_file = self.ligand.filename
+                    docking.method = self.name
+                    docking.pdb = results_pdb
+                    docking.energies = [model.energy for model in pdbqt]
+
+                    if "evals" not in model:
+                        model.evals = {}
+                    model.evals[self.ligand.name] = docking
 
                 else:
-                    job_data["fatal_error"] = True
-
-        job_data["evaluations"] = docking_data
+                    job_data.fatal_error = True
 
         return job_data
 
@@ -81,7 +84,7 @@ class BaseVina:
             "-A", "checkhydrogens",
         ]
 
-        external_command(command, job_data["variant"].name)
+        external_command(command, job_data.variant.name)
 
         # Run docking
         box_center = "--center_x {:.2f} --center_y {:.2f} --center_z {:.2f}".format(*self.parameters["box_center"])
@@ -100,7 +103,7 @@ class BaseVina:
         command += self.extra_arguments
         command = list(map(str, command))
 
-        external_command(command, job_data["variant"].name)
+        external_command(command, job_data.variant.name)
 
 
 class VinaDocking(BaseVina):

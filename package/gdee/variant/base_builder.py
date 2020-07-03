@@ -50,59 +50,30 @@ class BaseBuilder:
         self._variants.add(name)
 
     def save_results(self, data):
-        name = data["variant"].name
-        if data["fatal_error"]:
+        name = data.variant.name
+        if data.fatal_error:
             self._variants.remove(name)
             print("Error while processing variant: {}".format(name))
             return
 
-        variant_id = self.db.register_variant(
-                self.prot_id,
-                name,
-                data["variant"].to_modeller(),
-                data["variant_dir"],
-                data["is_wildtype"]
-        )
-        models = data["models"]
-        raw_metrics = data["measurements"]
-        metrics = tuple(raw_metrics.keys())
+        variant_id = self.db.register_variant(self.prot_id, name,
+                                              data.variant.to_modeller(),
+                                              data.variant_dir,
+                                              data.is_wildtype)
 
-        metric_names = []
-        for name, identifier in metrics:
-            self.db.register_metric(name, identifier)
-            metric_names.append(name)
+        modeling = data.modeling
+        for model in modeling.models:
+            model_id = self.db.register_model(variant_id, modeling.method,
+                                              model.score, model.pdb)
 
-        for model_idx in range(len(models["pdbs"])):
-            model_id = self.db.register_model(
-                variant_id,
-                models["method"],
-                [models["scores"][model_idx]],
-                models["pdbs"][model_idx]
-            )
+            for ligand_name, evaluation in model.evals.items():
+                eval_id = self.db.register_evaluation(variant_id, model_id,
+                                                      evaluation)
+                pose_id_list = self.db.register_poses(eval_id, evaluation.energies)
 
-            eval_data = data["evaluations"][model_idx]
+                self.db.register_measurements(eval_id, pose_id_list,
+                                              evaluation.measurements)
 
-            eval_id = self.db.register_evaluation(
-                variant_id,
-                model_id,
-                eval_data["ligand_file"],
-                eval_data["method"],
-                eval_data["pdb"]
-            )
-
-            pose_id_list = self.db.register_poses(
-                eval_id,
-                eval_data["energies"]
-            )
-
-            measurements = [raw_metrics[key][model_idx] for key in metrics]
-            self.db.register_measurements(
-                eval_id,
-                metric_names,
-                pose_id_list,
-                measurements
-            )
-
-        print("Ended with variant '{}'".format(data["variant"].name))
+        print("Ended with variant '{}'".format(data.variant.name))
 
         return True

@@ -9,6 +9,7 @@ from modeller import automodel
 import shutil
 import contextlib
 from tempfile import TemporaryDirectory
+from gdee.misc import DataContainer
 
 
 class ModellerBuilder:
@@ -29,7 +30,7 @@ class ModellerBuilder:
 
             model_data = self.build_models(job_data)
             if not model_data:
-                job_data["fatal_error"] = True
+                job_data.fatal_error = True
                 return job_data
 
             model_data.sort(key=lambda x: x["DOPE score"])
@@ -37,19 +38,26 @@ class ModellerBuilder:
 
             pdb_list = [model["name"] for model in top_models]
             structure = mda.Universe(pdb_list[0], pdb_list)
-            self.rename_models(structure, job_data["variant"])
+            self.rename_models(structure, job_data.variant)
 
-            pdb_list = []
+            model_list = []
             for i, ts in enumerate(structure.trajectory):
                 filename = "model_{:04d}.pdb".format(i)
-                pdb_list.append(filename)
-                structure.atoms.write(str(job_data["job_dir"] / filename))
+                structure.atoms.write(str(job_data.job_dir / filename))
 
-        job_data["models"] = {
-            "method": "modeller",
-            "scores": [model["molpdf"] for model in top_models],
-            "pdbs": pdb_list
-        }
+                model = DataContainer()
+                model.score = top_models[i]["DOPE score"]
+                model.pdb = filename
+                model_list.append(model)
+
+        if model_list:
+            modeled = DataContainer()
+            modeled.method = "modeller"
+            modeled.models = model_list
+            job_data.modeling = modeled
+
+        else:
+            job_data.fatal_error = True
 
         return job_data
 
@@ -57,8 +65,8 @@ class ModellerBuilder:
         template = ">P1;template\nstructureX:template.pdb:.:.:.:.::::\n{}*\n\n>P1;model\nsequence:model.pdb:.:.:.:.::::\n{}*\n"
         with open("alignment.ali", "w") as fd:
             fd.write(template.format(
-                job_data["wildtype"].to_modeller(),
-                job_data["variant"].to_modeller()
+                job_data.wildtype.to_modeller(),
+                job_data.variant.to_modeller()
             ))
 
     def build_models(self, job_data):
@@ -89,8 +97,8 @@ class ModellerBuilder:
 
         with contextlib.redirect_stdout(None):
             model.select_opt_residues(
-                job_data["mut_index"],
-                job_data["fixed_index"],
+                job_data.mut_index,
+                job_data.fixed_index,
                 self.parameters["optimize_radius"]
             )
 
