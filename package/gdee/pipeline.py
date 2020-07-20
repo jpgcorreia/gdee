@@ -99,8 +99,8 @@ class Pipeline:
     def run_pipeline(self, job_data):
         try:
             job_dir = self.work_dir / job_data.variant_dir
-            job_dir.makedirs_p()
             job_data.job_dir = job_dir
+            job_dir.makedirs_p()
             job_data.fatal_error = False
 
             for step in self.task_list:
@@ -109,7 +109,7 @@ class Pipeline:
                     return job_data
 
         except Exception as error:
-            job_data["fatal_error"] = True
+            job_data.fatal_error = True
             print(error)
 
         return job_data
@@ -118,7 +118,10 @@ class Pipeline:
         with tarfile.open(self.archive, "a") as tar:
             for result in data:
                 self._variant_builder.save_results(result)
-                tar.add(result.job_dir, result.variant_dir)
+
+                if not result.fatal_error:
+                    tar.add(result.job_dir, result.variant_dir)
+
                 result.job_dir.rmtree_p()
 
     def terminate(self):
