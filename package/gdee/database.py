@@ -26,7 +26,7 @@ class Database:
 
     def connect(self):
         # Connect to database
-        self._conn = sql.connect(self.filename)
+        self._conn = sql.connect(self.filename, timeout=120)
         self._conn.row_factory = sql.Row
 
     def create_tables(self):
