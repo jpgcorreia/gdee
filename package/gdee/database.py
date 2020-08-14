@@ -27,6 +27,7 @@ class Database:
     def connect(self):
         # Connect to database
         self._conn = sql.connect(self.filename, timeout=120)
+        self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.row_factory = sql.Row
 
     def create_tables(self):
