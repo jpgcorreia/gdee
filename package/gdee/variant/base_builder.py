@@ -38,10 +38,7 @@ class BaseBuilder:
         raise NotImplementedError("Child classes must implement this method")
 
     def variant_exists(self, name):
-        if name in self._variants:
-            return True
-
-        return self.db.variant_exists(self.prot_id, name)
+        return name in self._variants or self.db.variant_exists(self.prot_id, name)
 
     def new_variant(self, name):
         if name in self._variants:
