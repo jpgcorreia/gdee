@@ -97,7 +97,7 @@ class Database:
                 "        ligand_name TEXT NOT NULL,"
                 "        ligand_file TEXT NOT NULL,"
                 "        method TEXT NOT NULL,"
-                "        pdb_file TEXT NOT NULL,"
+                "        pdb_file TEXT NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
