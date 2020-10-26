@@ -1,5 +1,14 @@
 """
 """
+import json
+import numpy as np
+
+
+def _jsonfy(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+
+    raise TypeError()
 
 
 class DataContainer(dict):
@@ -10,3 +19,6 @@ class DataContainer(dict):
         if name in self:
             return self[name]
         raise AttributeError(name)
+
+    def jsonfy(self):
+        return json.dumps(self, default=_jsonfy)

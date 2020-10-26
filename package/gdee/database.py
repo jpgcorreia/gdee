@@ -79,7 +79,7 @@ class Database:
                 "                ON DELETE CASCADE"
                 "                ON UPDATE CASCADE,"
                 "        method TEXT NOT NULL,"
-                "        score REAL NOT NULL,"
+                "        scores TEXT NOT NULL,"
                 "        pdb_file TEXT NOT NULL"
                 "    );"
                 ""
@@ -223,18 +223,18 @@ class Database:
 
         return cursor.lastrowid
 
-    def register_model(self, variant_id, method, score, pdb_file):
+    def register_model(self, variant_id, method, scores, pdb_file):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
             "    Models ("
             "        variant_id,"
             "        method,"
-            "        score,"
+            "        scores,"
             "        pdb_file"
             "    ) "
             "VALUES (?, ?, ?, ?);",
-            (variant_id, method, score, pdb_file)
+            (variant_id, method, scores, pdb_file)
         )
 
         conn.commit()

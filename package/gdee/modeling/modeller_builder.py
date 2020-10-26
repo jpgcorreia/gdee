@@ -33,7 +33,7 @@ class ModellerBuilder:
                 job_data.fatal_error = True
                 return job_data
 
-            model_data.sort(key=lambda x: x["DOPE score"])
+            model_data.sort(key=lambda x: x["Normalized DOPE score"])
             top_models = model_data[:self.parameters["num_models"]]
 
             pdb_list = [model["name"] for model in top_models]
@@ -46,7 +46,9 @@ class ModellerBuilder:
                 structure.atoms.write(str(job_data.job_dir / filename))
 
                 model = DataContainer()
-                model.score = top_models[i]["DOPE score"]
+                model.scores = DataContainer()
+                model.scores.norm_dope = top_models[i]["Normalized DOPE score"]
+                model.scores.molpdf = top_models[i]["molpdf"]
                 model.pdb = filename
                 model_list.append(model)
 
@@ -75,7 +77,7 @@ class ModellerBuilder:
             alnfile="alignment.ali",
             knowns="template",
             sequence="model",
-            assess_methods=(automodel.assess.DOPE),
+            assess_methods=(automodel.assess.normalized_dope),
         )
 
         model.starting_model = 1
@@ -104,7 +106,7 @@ class ModellerBuilder:
 
             model.make()
 
-        model_data = [data for data in model.outputs if "DOPE score" in data]
+        model_data = [data for data in model.outputs if "Normalized DOPE score" in data]
 
         return model_data
 
