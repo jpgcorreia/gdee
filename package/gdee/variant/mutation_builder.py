@@ -67,19 +67,20 @@ class MutationBuilder(BaseBuilder):
                 raise RuntimeError("Residue {}:{} marked as fixed and mutable".format(res.chain, res.resid))
 
         self.fixed_index = [res.index for res in fixed_sel]
-        self.mut_index = [res.index for res in self.variant_sel]
-        self.mut_index.sort()
 
     def mutations(self):
         mutations = []
+        mut_index = []
         for wt_res, mut_res in zip(self.wildtype_sel, self.variant_sel):
             if wt_res.code != mut_res.code:
                 mutations.append("{}:{}{}{}".format(wt_res.chain, wt_res.code, wt_res.resid, mut_res.code))
+                mut_index.append(mut_res.index)
+        mut_index.sort()
 
         if mutations:
-            return "|".join(mutations)
+            return "|".join(mutations), tuple(mut_index)
 
-        return self.protein.name
+        return self.protein.name, tuple(res.index for res in self.wildtype_sel)
 
     def fetch_next_job(self):
         if self.iterations >= self.max_iter:
@@ -87,7 +88,7 @@ class MutationBuilder(BaseBuilder):
 
         max_tries = 20 * len(self.wildtype_sel) # We can only go linear
         while True:
-            mut_name = self.mutations()
+            mut_name, mut_index = self.mutations()
             if not self.variant_exists(mut_name):
                 break
 
@@ -113,7 +114,7 @@ class MutationBuilder(BaseBuilder):
         job.wildtype = self.protein.copy()
         job.variant = variant
         job.is_wildtype = mut_name == self.protein.name
-        job.mut_index = self.mut_index.copy()
+        job.mut_index = mut_index
         job.fixed_index = self.fixed_index.copy()
 
         return job
