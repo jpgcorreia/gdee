@@ -28,7 +28,6 @@ class Database:
         # Connect to database
         self._conn = sql.connect(self.filename, timeout=120)
         self._conn.execute("PRAGMA foreign_keys = ON")
-        self._conn.row_factory = sql.Row
 
     def create_tables(self):
         # Create tables
@@ -173,6 +172,18 @@ class Database:
         conn.commit()
 
         return cursor.lastrowid
+
+    def fetch_variants(self, prot_id):
+        cursor = self.conn.execute(
+            "SELECT"
+            "    name "
+            "FROM"
+            "    Variants "
+            "WHERE"
+            "    prot_id = ?;",
+            (prot_id,)
+        )
+        return cursor.fetchall()
 
     def variant_exists(self, prot_id, mutations):
         cursor = self.conn.execute(

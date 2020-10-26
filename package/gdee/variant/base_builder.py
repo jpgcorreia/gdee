@@ -23,6 +23,8 @@ class BaseBuilder:
         self._initialized = True
         self.prot_id = self.db.register_protein(self.parameters["protein_name"])
         self.protein = ProtSeq(self.parameters["protein_name"], self.parameters["pdb_file"])
+        # Faster than making queries and low memory overhead
+        self._variants.update(item[0] for item in self.db.fetch_variants(self.prot_id))
         self.special_initialize()
 
     def special_initialize(self):
@@ -32,15 +34,19 @@ class BaseBuilder:
         if not self._initialized:
             self.initialize()  # Lazy initialization
 
-        return self.fetch_next_job()
+        job = self.fetch_next_job()
+        if job is not None:
+            self.add_variant(job.variant.name)
+
+        return job
 
     def fetch_next_job(self):
         raise NotImplementedError("Child classes must implement this method")
 
     def variant_exists(self, name):
-        return name in self._variants or self.db.variant_exists(self.prot_id, name)
+        return name in self._variants
 
-    def new_variant(self, name):
+    def add_variant(self, name):
         if name in self._variants:
             raise RuntimeError("Variant {} already exists".format(name))
 

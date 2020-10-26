@@ -104,7 +104,6 @@ class MutationBuilder(BaseBuilder):
                         break
 
         variant_dir = mut_name.replace("|", "_").replace(":", "")
-        self.new_variant(mut_name)
         variant = self.variant.copy()
         variant.name = mut_name
         self.iterations += 1
