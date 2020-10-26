@@ -2,6 +2,7 @@
 """
 
 
+from gdee import files
 from gdee.variant import VariantBuilderFactory
 from gdee.modeling import ModelBuilderFactory
 from gdee.evaluator import EvaluatorFactory
@@ -32,7 +33,7 @@ class PipelineFactory:
         base_dir = Path(self.work_dir).abspath()
         pipeline.work_dir = base_dir / "files"
         pipeline.work_dir.makedirs_p()
-        pipeline.archive = base_dir / "files.tar"
+        pipeline.archiver = files.Archiver(base_dir / "files.tar", 1000)
 
         variant_factory = VariantBuilderFactory()
         self.variant_parameters["db_file"] = self.db_file
@@ -65,7 +66,7 @@ class Pipeline:
     def __init__(self):
         self.database = None
         self.work_dir = Path().abspath()
-        self.archive = "files.tar"
+        self.archiver = files.Archiver("files.tar", 1000)
         self._variant_builder = None
         self.task_list = []
         self._terminate = False
@@ -115,14 +116,14 @@ class Pipeline:
         return job_data
 
     def save_results(self, data):
-        with tarfile.open(self.archive, "a") as tar:
-            for result in data:
-                self._variant_builder.save_results(result)
+        for result in data:
+            self._variant_builder.save_results(result)
 
-                if not result.fatal_error:
-                    tar.add(result.job_dir, result.variant_dir)
-
-                result.job_dir.rmtree_p()
+            if not result.fatal_error:
+                self.archiver.add(result.job_dir, result.variant_dir)
 
     def terminate(self):
         self._terminate = True
+
+    def finalize(self):
+        self.archiver.finalize()

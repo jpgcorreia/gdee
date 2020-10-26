@@ -58,6 +58,8 @@ class MPIManager:
                 self.pipeline.save_results(message.data)
                 self.not_saved -= len(message.data)
 
+        self.pipeline.finalize()
+
     def send_task(self, size):
         tasks = self.pipeline.next_job(size)
 
