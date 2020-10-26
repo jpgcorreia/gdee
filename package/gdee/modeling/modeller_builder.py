@@ -87,14 +87,20 @@ class ModellerBuilder:
         if opt_level == 0:
             model.library_schedule = automodel.autosched.very_fast
             model.md_level = automodel.refine.fast
+            model.max_var_iterations = 100
+            model.repeat_optimization = 1
 
         elif opt_level == 1:
             model.library_schedule = automodel.autosched.normal
             model.md_level = automodel.refine.slow
+            model.max_var_iterations = 200
+            model.repeat_optimization = 1
 
         else:
             model.library_schedule = automodel.autosched.slow
             model.md_level = automodel.refine.very_slow
+            model.max_var_iterations = 300
+            model.repeat_optimization = 2
 
 
         with contextlib.redirect_stdout(None):
