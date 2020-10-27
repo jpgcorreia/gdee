@@ -1,7 +1,6 @@
 """
 """
 import subprocess
-from tempfile import TemporaryDirectory
 from path import Path
 
 
@@ -80,16 +79,11 @@ class VoroMQA:
         self.program = program
 
     def __call__(self, model_pdb):
-        temp_dir = TemporaryDirectory(prefix="gdee_voromqa")
-        path = Path(temp_dir.name)
-        model_file = path / "model.pdb"
         command = [
             self.program,
             "--processors", "1",
-            "-i", model_file
+            "-i", model_pdb
         ]
 
-        model_pdb.copy(model_file)
         process = external_command(command, "voromqa")
-
         return float(process.stdout.decode().split()[1])
