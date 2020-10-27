@@ -23,6 +23,7 @@ class PipelineFactory:
         self.pdb = None
         self.ligands = []
         self.db_file = None
+        self.io = {}
         self.variant_parameters = {}
         self.model_parameters = {}
         self.model_quality_parameters = {}
@@ -34,7 +35,10 @@ class PipelineFactory:
         base_dir = Path(self.work_dir).abspath()
         pipeline.work_dir = base_dir / "files"
         pipeline.work_dir.makedirs_p()
-        pipeline.archiver = files.Archiver(base_dir / "files.tar", 1000)
+
+        pipeline.archiver = files.Archiver(self.io["output"],
+                                           self.io["output_format"],
+                                           self.io["output_freq"])
 
         variant_factory = VariantBuilderFactory()
         self.variant_parameters["db_file"] = self.db_file
@@ -72,7 +76,7 @@ class Pipeline:
     def __init__(self):
         self.database = None
         self.work_dir = Path().abspath()
-        self.archiver = files.Archiver("files.tar", 1000)
+        self.archiver = files.Archiver("files", ".{:06d}", 1000)
         self._variant_builder = None
         self.task_list = []
         self._terminate = False

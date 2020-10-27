@@ -29,6 +29,7 @@ class ProteinEngineering:
         self.db_file = database
         self.pdb = None
         self.ligands = {}
+        self.io = {"output": "files", "output_format": ".{:06d}", "output_freq": 1000}
         self.platform = {"name": "simple", "local_cpu": 1}
         self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina", "voromqa": "voronota-voromqa"}
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "fixed": "", "conservative": True, "max_iterations": 1000, "combinations": -1, "msa": "", "excluded": {}, "excluded_all": ""}
@@ -55,6 +56,7 @@ class ProteinEngineering:
         pipeline_factory.pdb = self.pdb
         pipeline_factory.ligands = tuple(self.ligands.values())
         pipeline_factory.db_file = self.db_file
+        pipeline_factory.io = self.io
         pipeline_factory.variant_parameters = self.variant
         pipeline_factory.model_parameters = self.model
         pipeline_factory.model_quality_parameters = self.model_quality
