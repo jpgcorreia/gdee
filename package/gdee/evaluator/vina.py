@@ -40,6 +40,12 @@ class BaseVina:
 
         with temp_path:
             for idx, model in enumerate(job_data.modeling.models):
+                if "evals" not in model:
+                    model.evals = {}
+
+                if model.rejected:
+                    continue
+
                 protein = mda.Universe(str(job_dir / model.pdb))
                 pos = protein.atoms.positions
                 size = np.array(self.parameters["box_size"], np.float32) + 1
@@ -66,8 +72,6 @@ class BaseVina:
                     docking.pdb = results_pdb
                     docking.energies = [model.energy for model in pdbqt]
 
-                    if "evals" not in model:
-                        model.evals = {}
                     model.evals[self.ligand.name] = docking
 
                 else:

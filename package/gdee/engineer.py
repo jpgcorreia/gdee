@@ -30,9 +30,10 @@ class ProteinEngineering:
         self.pdb = None
         self.ligands = {}
         self.platform = {"name": "simple", "local_cpu": 1}
-        self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina"}
+        self.programs = {"mgltools": "mgltools", "vina": "vina", "vinardo": "smina", "voromqa": "voronota-voromqa"}
         self.variant = {"name": "mutation", "matrix": "blosum62", "selection": "", "fixed": "", "conservative": True, "max_iterations": 1000, "combinations": -1, "msa": "", "excluded": {}, "excluded_all": ""}
         self.model = {"name": "modeller", "optimize_radius": 0, "num_models": 5, "optimize_level": 0}
+        self.model_quality = {"norm_dope": -1, "voromqa": 0.4}
         self.evaluator = {"name": "vina", "exhaustiveness": 50}
         self._pipeline = None
         self._terminate = False
@@ -56,6 +57,7 @@ class ProteinEngineering:
         pipeline_factory.db_file = self.db_file
         pipeline_factory.variant_parameters = self.variant
         pipeline_factory.model_parameters = self.model
+        pipeline_factory.model_quality_parameters = self.model_quality
         pipeline_factory.evaluator_parameters = self.evaluator
         self.pipeline = pipeline_factory.make()
 

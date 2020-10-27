@@ -79,7 +79,8 @@ class Database:
                 "                ON UPDATE CASCADE,"
                 "        method TEXT NOT NULL,"
                 "        scores TEXT NOT NULL,"
-                "        pdb_file TEXT NOT NULL"
+                "        pdb_file TEXT NOT NULL,"
+                "        rejected INT NOT NULL"
                 "    );"
                 ""
                 "CREATE TABLE IF NOT EXISTS"
@@ -234,7 +235,7 @@ class Database:
 
         return cursor.lastrowid
 
-    def register_model(self, variant_id, method, scores, pdb_file):
+    def register_model(self, variant_id, method, scores, pdb_file, rejected):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
@@ -242,10 +243,11 @@ class Database:
             "        variant_id,"
             "        method,"
             "        scores,"
-            "        pdb_file"
+            "        pdb_file,"
+            "        rejected"
             "    ) "
-            "VALUES (?, ?, ?, ?);",
-            (variant_id, method, scores, pdb_file)
+            "VALUES (?, ?, ?, ?, ?);",
+            (variant_id, method, scores, pdb_file, rejected)
         )
 
         conn.commit()

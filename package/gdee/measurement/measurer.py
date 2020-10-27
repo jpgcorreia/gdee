@@ -55,6 +55,16 @@ class Measurer:
         job_dir = Path(job_data.job_dir)
         modeling = job_data.modeling
         lig_name = self.ligand_name
+
+        # Check if there is at least one evaluation
+        ligand_pdb = None
+        for model in modeling.models:
+            if lig_name in model.evals:
+                ligand_pdb = model.evals[lig_name]
+
+        if ligand_pdb is None:
+            return job_data
+
         protein = mda.Universe(str(job_dir / modeling.models[0].pdb))
         ligand = mda.Universe(str(job_dir / modeling.models[0].evals[lig_name].pdb))
 

@@ -4,7 +4,7 @@
 
 from gdee import files
 from gdee.variant import VariantBuilderFactory
-from gdee.modeling import ModelBuilderFactory
+from gdee.modeling import ModelBuilderFactory, ModelQualityBuilderFactory
 from gdee.evaluator import EvaluatorFactory
 from gdee.measurement import MeasurerFactory
 from path import Path
@@ -25,6 +25,7 @@ class PipelineFactory:
         self.db_file = None
         self.variant_parameters = {}
         self.model_parameters = {}
+        self.model_quality_parameters = {}
         self.evaluator_parameters = {}
 
     def make(self):
@@ -46,6 +47,11 @@ class PipelineFactory:
         self.model_parameters["pdb_file"] = self.pdb
         model_factory.parameters = self.model_parameters
         pipeline.add_task(model_factory.make())
+
+        quality_factory = ModelQualityBuilderFactory()
+        self.model_quality_parameters["programs"] = self.programs
+        quality_factory.parameters = self.model_quality_parameters
+        pipeline.add_task(quality_factory.make())
 
         self.evaluator_parameters.update(self.programs)
         evaluator_factory = EvaluatorFactory()

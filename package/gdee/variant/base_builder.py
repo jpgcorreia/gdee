@@ -67,7 +67,8 @@ class BaseBuilder:
         modeling = data.modeling
         for model in modeling.models:
             model_id = self.db.register_model(variant_id, modeling.method,
-                                              model.scores.jsonfy(), model.pdb)
+                                              model.scores.jsonfy(), model.pdb,
+                                              model.rejected)
 
             for ligand_name, evaluation in model.evals.items():
                 eval_id = self.db.register_evaluation(variant_id, model_id,

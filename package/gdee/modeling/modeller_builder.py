@@ -50,6 +50,7 @@ class ModellerBuilder:
                 model.scores.norm_dope = top_models[i]["Normalized DOPE score"]
                 model.scores.molpdf = top_models[i]["molpdf"]
                 model.pdb = filename
+                model.rejected = False
                 model_list.append(model)
 
         if model_list:
