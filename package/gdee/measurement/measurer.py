@@ -19,12 +19,11 @@ class Task:
 
     def clear(self):
         self.data = []
-        self.enabled = False
 
     def set_system(self, protein, ligand):
         self.prot_sel = protein.select_atoms(self.prot_text)
         self.lig_sel = ligand.select_atoms(self.lig_text)
-        self.enabled = len(self.prot_sel) and len(self.lig_sel)
+        self.enabled = bool(len(self.prot_sel) and len(self.lig_sel))
 
     def compute(self):
         self.data.append(self.metric.compute(self.prot_sel.positions, self.lig_sel.positions))
@@ -58,15 +57,18 @@ class Measurer:
 
         # Check if there is at least one evaluation
         ligand_pdb = None
+        protein_pdb = None
         for model in modeling.models:
             if lig_name in model.evals:
-                ligand_pdb = model.evals[lig_name]
+                ligand_pdb = model.evals[lig_name].pdb
+                protein_pdb = model.pdb
+                break
 
-        if ligand_pdb is None:
+        if ligand_pdb is None or protein_pdb is None:
             return job_data
 
-        protein = mda.Universe(str(job_dir / modeling.models[0].pdb))
-        ligand = mda.Universe(str(job_dir / modeling.models[0].evals[lig_name].pdb))
+        protein = mda.Universe(str(job_dir / protein_pdb))
+        ligand = mda.Universe(str(job_dir / ligand_pdb))
 
         for task in self.task_list:
             task.set_system(protein, ligand)
@@ -75,6 +77,9 @@ class Measurer:
                           task.name, job_data.variant.name))
 
         for model in job_data.modeling.models:
+            if lig_name not in model.evals:
+                continue
+
             evaluation = model.evals[lig_name]
             protein.load_new(str(job_dir / model.pdb))
             ligand.load_new(str(job_dir / evaluation.pdb))
