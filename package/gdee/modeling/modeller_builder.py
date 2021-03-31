@@ -36,7 +36,7 @@ class ModellerBuilder:
             model_data.sort(key=lambda x: x["Normalized DOPE score"])
             top_models = model_data[:self.parameters["num_models"]]
 
-            pdb_list = [model["name"] for model in top_models]
+            pdb_list = [str(model["name"]) for model in top_models]
             structure = mda.Universe(pdb_list[0], pdb_list)
             self.rename_models(structure, job_data.variant)
 
@@ -83,6 +83,7 @@ class ModellerBuilder:
 
         model.starting_model = 1
         model.ending_model = 3 * self.parameters["num_models"]
+        model.final_malign3d = True
 
         opt_level = self.parameters["optimize_level"]
         if opt_level == 0:
@@ -113,7 +114,13 @@ class ModellerBuilder:
 
             model.make()
 
-        model_data = [data for data in model.outputs if "Normalized DOPE score" in data]
+        model_data = []
+        for data in model.outputs:
+            if "Normalized DOPE score" not in data:
+                continue
+
+            data["name"] = Path(data["name"]).stem + "_fit.pdb"
+            model_data.append(data)
 
         return model_data
 
