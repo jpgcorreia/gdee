@@ -2,10 +2,11 @@
 """
 
 
-from .sequence import ProtSeq
-from .base_builder import BaseBuilder
 import re
 import warnings
+from .sequence import ProtSeq
+from .base_builder import BaseBuilder
+from gdee.misc import DataContainer
 
 from Bio import SeqIO, Align, BiopythonWarning
 with warnings.catch_warnings():
@@ -25,9 +26,6 @@ class MSABuilder(BaseBuilder):
         self.msa = tuple()
         self._iter = iter(self.msa)
         self._is_wildtype = True
-        self._aligner = Align.PairwiseAligner()
-        self._aligner.open_gap_score = -10
-        self._aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
 
     def special_initialize(self):
         self.wt_seq = self.protein.to_modeller().replace("/", "")
@@ -35,7 +33,10 @@ class MSABuilder(BaseBuilder):
         self._iter = iter(self.msa)
 
     def variant_from_alignment(self, name, other_seq):
-        alignment = self._aligner.align(self.wt_seq, other_seq)
+        aligner = Align.PairwiseAligner()
+        aligner.open_gap_score = -10
+        aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
+        alignment = aligner.align(self.wt_seq, other_seq)
         if not alignment:
             raise RuntimeError("No suitable alignment found for sequence '{}'".format(other_seq))
 
@@ -44,6 +45,7 @@ class MSABuilder(BaseBuilder):
         variant_iter = iter(variant.flatten())
         mut_index = []
 
+        is_wildtype = True
         for query, match, target in zip(*alignment[0].format().split()):
             if query == "-":
                 continue
@@ -52,11 +54,14 @@ class MSABuilder(BaseBuilder):
             code = seq_pos.code
             assert code == query
 
-            if target != "-" and target != code:
-                seq_pos.code = target
-                mut_index.append(seq_pos.index)
+            if target != code:
+                is_wildtype = False
 
-        return variant, mut_index
+                if target != "-":
+                    seq_pos.code = target
+                    mut_index.append(seq_pos.index)
+
+        return variant, mut_index, is_wildtype
 
     def fetch_next_job(self):
         is_wildtype = False
@@ -69,25 +74,17 @@ class MSABuilder(BaseBuilder):
         else:
             try:
                 next_seq = next(self._iter)
-                variant, mut_index = self.variant_from_alignment(next_seq.name, str(next_seq.seq))
+                variant, mut_index, is_wildtype = self.variant_from_alignment(next_seq.name, str(next_seq.seq))
 
             except StopIteration:
                 return None
 
-        variant_dir = get_valid_filename(variant.name)
-        variant_id = self.db.register_variant(
-            self.prot_id,
-            variant.name,
-            variant.to_modeller(),
-            variant_dir,
-            is_wildtype
-        )
+        job = DataContainer()
+        job.variant_dir = get_valid_filename(variant.name)
+        job.wildtype = self.protein.copy()
+        job.variant = variant
+        job.is_wildtype = is_wildtype
+        job.mut_index = mut_index
+        job.fixed_index = tuple()
 
-        job = {
-            "variant_dir": variant_dir,
-            "variant_id": variant_id,
-            "wildtype": self.protein.copy(),
-            "variant": variant,
-            "mut_index": mut_index
-        }
         return job
