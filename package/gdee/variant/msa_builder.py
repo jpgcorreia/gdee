@@ -43,7 +43,6 @@ class MSABuilder(BaseBuilder):
         variant = self.protein.copy()
         variant.name = name
         variant_iter = iter(variant.flatten())
-        mut_index = []
 
         is_wildtype = True
         for query, match, target in zip(*alignment[0].format().split()):
@@ -59,9 +58,8 @@ class MSABuilder(BaseBuilder):
 
                 if target != "-":
                     seq_pos.code = target
-                    mut_index.append(seq_pos.index)
 
-        return variant, mut_index, is_wildtype
+        return variant, is_wildtype
 
     def fetch_next_job(self):
         is_wildtype = False
@@ -69,12 +67,11 @@ class MSABuilder(BaseBuilder):
             self._is_wildtype = False
             is_wildtype = True
             variant = self.protein.copy()
-            mut_index = []
 
         else:
             try:
                 next_seq = next(self._iter)
-                variant, mut_index, is_wildtype = self.variant_from_alignment(next_seq.name, str(next_seq.seq))
+                variant, is_wildtype = self.variant_from_alignment(next_seq.name, str(next_seq.seq))
 
             except StopIteration:
                 return None
@@ -84,7 +81,7 @@ class MSABuilder(BaseBuilder):
         job.wildtype = self.protein.copy()
         job.variant = variant
         job.is_wildtype = is_wildtype
-        job.mut_index = mut_index
+        job.mut_index = tuple()
         job.fixed_index = tuple()
 
         return job
