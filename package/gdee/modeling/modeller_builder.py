@@ -102,7 +102,7 @@ class ModellerBuilder:
             model.library_schedule = automodel.autosched.slow
             model.md_level = automodel.refine.very_slow
             model.max_var_iterations = 300
-            model.repeat_optimization = 2
+            model.repeat_optimization = 1
 
 
         with contextlib.redirect_stdout(None):
@@ -151,6 +151,7 @@ class MutationModel(automodel.automodel):
             res = [self.residues[pos] for pos in self._opt_residues]
         else:
             res = self.residues
+
         sel = mdl.selection(res)
 
         if self._opt_residues_coff > 0:
