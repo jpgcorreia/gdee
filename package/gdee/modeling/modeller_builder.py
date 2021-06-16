@@ -10,6 +10,9 @@ import shutil
 import contextlib
 from tempfile import TemporaryDirectory
 from gdee.misc import DataContainer
+import warnings
+
+warnings.filterwarnings("ignore", module=r"MDAnalysis.*")
 
 
 class ModellerBuilder:

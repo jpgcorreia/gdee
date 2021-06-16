@@ -54,7 +54,15 @@ class BaseBuilder:
 
     def save_results(self, data):
         name = data.variant.name
-        if data.fatal_error:
+
+        # Sanity check
+        has_eval = False
+        for model in data.modeling.models:
+            if model.evals:
+                has_eval = True
+                break
+
+        if data.fatal_error or not has_eval:
             self._variants.remove(name)
             print("Error while processing variant: {}".format(name))
             return
@@ -66,6 +74,9 @@ class BaseBuilder:
 
         modeling = data.modeling
         for model in modeling.models:
+            if not model.evals:
+                continue
+
             model_id = self.db.register_model(variant_id, modeling.method,
                                               model.scores.jsonfy(), model.pdb,
                                               model.rejected)

@@ -12,6 +12,9 @@ import string
 import pkgutil
 import itertools
 from collections import defaultdict
+import warnings
+
+warnings.filterwarnings("ignore", module=r"MDAnalysis.*")
 
 
 __all__ = ["three_to_one", "SEQ_3_1", "ProtSeq", "ChainSeq", "SeqPos", "ResidueIndex", "MatrixMutation", "Blosum62Mutation"]

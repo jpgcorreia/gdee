@@ -9,6 +9,9 @@ import subprocess
 from tempfile import TemporaryDirectory
 from .pdbqt import PDBQT
 from gdee.misc import DataContainer
+import warnings
+
+warnings.filterwarnings("ignore", module=r"MDAnalysis.*")
 
 
 def external_command(arguments, name):
@@ -56,26 +59,28 @@ class BaseVina:
                 smaller = protein.atoms[atoms].residues.atoms
                 smaller.write(str(temp_path / "model.pdb"))
 
-                self.run_docking(job_data)
+                try:
+                    self.run_docking(job_data)
+                    pdbqt = PDBQT("results.pdbqt")
 
-                # Process and save results
-                pdbqt = PDBQT("results.pdbqt")
-                if pdbqt.size():
-                    results_pdb = "docking_{}_{:04d}.pdb".format(self.ligand.name,
-                                                                 idx)
-                    pdbqt.write_pdb(job_dir / results_pdb)
-
-                    docking = DataContainer()
-                    docking.ligand_name = self.ligand.name
-                    docking.ligand_file = self.ligand.filename
-                    docking.method = self.name
-                    docking.pdb = results_pdb
-                    docking.energies = [model.energy for model in pdbqt]
-
-                    model.evals[self.ligand.name] = docking
+                except Exception as error:
+                    print(error)
 
                 else:
-                    job_data.fatal_error = True
+                    # Process and save results
+                    if pdbqt.size():
+                        results_pdb = "docking_{}_{:04d}.pdb".format(self.ligand.name,
+                                                                     idx)
+                        pdbqt.write_pdb(job_dir / results_pdb)
+
+                        docking = DataContainer()
+                        docking.ligand_name = self.ligand.name
+                        docking.ligand_file = self.ligand.filename
+                        docking.method = self.name
+                        docking.pdb = results_pdb
+                        docking.energies = [model.energy for model in pdbqt]
+
+                        model.evals[self.ligand.name] = docking
 
         return job_data
 

@@ -5,6 +5,9 @@
 from path import Path
 import MDAnalysis as mda
 from gdee.misc import DataContainer
+import warnings
+
+warnings.filterwarnings("ignore", module=r"MDAnalysis.*")
 
 
 class Task:
