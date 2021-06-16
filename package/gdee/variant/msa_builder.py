@@ -36,7 +36,7 @@ class MSABuilder(BaseBuilder):
         aligner = Align.PairwiseAligner()
         aligner.open_gap_score = -10
         aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
-        alignment = aligner.align(self.wt_seq, other_seq)
+        alignment = aligner.align(self.wt_seq.replace(".", ""), other_seq)
         if not alignment:
             raise RuntimeError("No suitable alignment found for sequence '{}'".format(other_seq))
 
