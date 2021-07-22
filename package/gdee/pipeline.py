@@ -121,16 +121,21 @@ class Pipeline:
 
         except Exception as error:
             job_data.fatal_error = True
-            print(error)
+            print("Exception caught:\n", error)
 
         return job_data
 
     def save_results(self, data):
         for result in data:
-            self._variant_builder.save_results(result)
+            try:
+                self._variant_builder.save_results(result)
 
-            if not result.fatal_error:
-                self.archiver.add(result.job_dir, result.variant_dir)
+                if not result.fatal_error:
+                    self.archiver.add(result.job_dir, result.variant_dir)
+
+            except Exception as error:
+                self._variant_builder.unsave_results(data)
+                print("Exception caught:\n", error)
 
     def terminate(self):
         self._terminate = True

@@ -52,15 +52,23 @@ class BaseBuilder:
 
         self._variants.add(name)
 
+    def unsave_results(self, data):
+        name = data.variant.name
+        variant_id = self.db.remove_variant(self.prot_id, name)
+        self._variants.add(name)
+
     def save_results(self, data):
         name = data.variant.name
 
         # Sanity check
         has_eval = False
-        for model in data.modeling.models:
-            if model.evals:
-                has_eval = True
-                break
+        try:
+            for model in data.modeling.models:
+                if model.evals:
+                    has_eval = True
+                    break
+        except AttributeError:
+            pass
 
         if data.fatal_error or not has_eval:
             self._variants.remove(name)

@@ -222,14 +222,14 @@ class Database:
 
         return cursor.lastrowid
 
-    def remove_variant(self, variant_id):
+    def remove_variant(self, variant_name):
         conn = self.conn
         cursor = conn.execute(
             "DELETE FROM"
             "    Variants "
             "WHERE"
-            "    variant_id = ?;",
-            (variant_id,)
+            "    name = ?;",
+            (variant_name,)
         )
         conn.commit()
 
