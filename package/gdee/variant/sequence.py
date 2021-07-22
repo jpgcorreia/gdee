@@ -92,6 +92,10 @@ class SeqPos:
             self._gap = False
 
     @property
+    def is_blk(self):
+        return self._blk
+
+    @property
     def is_gap(self):
         return self._gap
 

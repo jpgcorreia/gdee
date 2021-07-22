@@ -50,6 +50,8 @@ class MSABuilder(BaseBuilder):
                 continue
 
             seq_pos = next(variant_iter)
+            while seq_pos.is_blk:
+                seq_pos = next(variant_iter)
             code = seq_pos.code
             assert code == query
 
