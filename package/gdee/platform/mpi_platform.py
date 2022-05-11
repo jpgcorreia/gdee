@@ -37,6 +37,9 @@ class MPIPlatform:
             self.runner = MPIRunner(self.comm, self.root, self.local_cpu, self.pipeline)
             self.runner.run()
 
+        # Synchronize all runners so we can run again
+        self.comm.Barrier()
+
 
 class MPIManager:
     def __init__(self, mpi_comm, local_cpu, pipeline):
