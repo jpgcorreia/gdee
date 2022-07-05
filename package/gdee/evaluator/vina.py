@@ -57,6 +57,8 @@ class BaseVina:
                 lower = center - size
                 atoms = np.all((pos <= upper) & (pos >= lower), axis=1)
                 smaller = protein.atoms[atoms].residues.atoms
+                if not len(smaller):
+                    raise RuntimeError("No protein atoms inside the docking search box")
                 smaller.write(str(temp_path / "model.pdb"))
 
                 try:
