@@ -10,6 +10,7 @@ from gdee.measurement import MeasurerFactory
 from path import Path
 import tarfile
 import os
+import traceback
 
 
 __all__ = ["PipelineFactory"]
@@ -121,7 +122,7 @@ class Pipeline:
 
         except Exception as error:
             job_data.fatal_error = True
-            print("Exception caught:\n", error)
+            print("Exception caught:", traceback.print_exc(), error, sep="\n")
 
         return job_data
 
@@ -134,8 +135,8 @@ class Pipeline:
                     self.archiver.add(result.job_dir, result.variant_dir)
 
             except Exception as error:
+                print("Exception caught:", traceback.print_exc(), error, sep="\n")
                 self._variant_builder.unsave_results(data)
-                print("Exception caught:\n", error)
 
     def terminate(self):
         self._terminate = True
