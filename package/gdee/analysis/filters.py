@@ -4,6 +4,7 @@
 
 import csv
 import uuid
+import numbers
 from ..database import Database
 
 
@@ -42,6 +43,13 @@ class Metric:
         return self._compare("!=", value)
 
     def _compare(self, operator, value):
+        if isinstance(value, numbers.Number):
+            return self._compare_number(operator, value)
+
+        elif isinstance(value, Metric):
+            return self._compare_metrics(operator, value)
+
+    def _compare_number(self, operator, value):
         table = _generate_table_name()
         self._database.conn.execute(
             "CREATE TEMP TABLE {} AS "
@@ -49,6 +57,20 @@ class Metric:
             "FROM Measurements "
             "WHERE metric_id = ? AND value {} ?;".format(table, operator),
             (self._metric_id, value)
+        )
+        return Rule(table, self._database)
+
+    def _compare_metrics(self, operator, other):
+        table = _generate_table_name()
+        self._database.conn.execute(
+            "CREATE TEMP TABLE {} AS "
+            "SELECT M1.pose_id "
+            "FROM Measurements M1 "
+            "INNER JOIN Measurements M2 "
+            "ON M1.pose_id = M2.pose_id "
+            "WHERE M1.metric_id = ? and M2.metric_id = ? "
+            "AND M1.value {} M2.value;".format(table, operator),
+            (self._metric_id, other._metric_id)
         )
         return Rule(table, self._database)
 
