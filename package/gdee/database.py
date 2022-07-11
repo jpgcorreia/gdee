@@ -291,22 +291,29 @@ class Database:
         conn.commit()
         return pose_id
 
+    def fetch_metric_id(self, name):
+        cursor = self.conn.execute(
+            "SELECT"
+            "    metric_id "
+            "FROM"
+            "    Metrics "
+            "WHERE"
+            "    name = ?;",
+            (name,)
+        )
+        data = cursor.fetchall()
+        if data:
+            return data[0][0]
+
+        return None
+
     def register_metric(self, name, identifier):
         if name not in self._metric_ids:
             conn = self.conn
-            cursor = conn.execute(
-                "SELECT"
-                "    metric_id "
-                "FROM"
-                "    Metrics "
-                "WHERE"
-                "    name = ?;",
-                (name,)
-            )
-            data = cursor.fetchall()
-            if data:
-                self._metric_ids[name] = data[0][0]
+            metric_id = self.fetch_metric_id(name)
 
+            if metric_id is not None:
+                self._metric_ids[name] = metric_id
             else:
                 cursor = conn.execute(
                     "INSERT INTO"
