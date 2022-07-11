@@ -83,6 +83,7 @@ class ExhaustiveBuilder(BaseBuilder):
         mut_index.sort()
 
         if mutations:
+            # return "|".join(mutations), tuple(res.index for res in self.wildtype_sel)
             return "|".join(mutations), tuple(mut_index)
 
         return self.protein.name, tuple(res.index for res in self.wildtype_sel)
