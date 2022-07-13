@@ -112,8 +112,8 @@ class Rule:
     def __bool__(self):
         raise TypeError("Rule not convertible to bool. Use the bitwise operators ~ (not), & (and), | (or) for boolean expressions.")
 
-    def rank(self):
-        return Rank.from_rule(self._table, self._database)
+    def rank(self, ascending=True):
+        return Rank.from_rule(self._table, self._database, ascending)
 
 
 class Rank:
@@ -122,7 +122,8 @@ class Rank:
         self._database = database
 
     @staticmethod
-    def from_rule(poses_table, database):
+    def from_rule(poses_table, database, ascending):
+        order = "ASC" if ascending else "DESC"
         temp_table = _generate_table_name()
         table = _generate_table_name()
         database.conn.executescript(
@@ -131,7 +132,7 @@ class Rank:
             "    FROM Poses "
             "    WHERE pose_id IN (SELECT pose_id FROM {1}); "
             ""
-            "CREATE TABLE {2} AS "
+            "CREATE TEMP TABLE {2} AS "
             "SELECT MIN(energy) energy, name, directory, is_wildtype, "
             "       model_id, Evaluations.variant_id, Evaluations.eval_id, "
             "       S.pdb_index pose_index, Evaluations.pdb_file docking_file "
@@ -139,9 +140,9 @@ class Rank:
             "INNER JOIN Evaluations ON S.eval_id = Evaluations.eval_id "
             "INNER JOIN Variants ON Evaluations.variant_id = Variants.variant_id "
             "GROUP BY Evaluations.variant_id "
-            "ORDER BY energy; "
+            "ORDER BY energy {3}; "
             ""
-            "DROP TABLE IF EXISTS {0};".format(temp_table, poses_table, table)
+            "DROP TABLE IF EXISTS {0};".format(temp_table, poses_table, table, order)
         )
         return Rank(table, database)
 
@@ -150,10 +151,20 @@ class Rank:
         not_like = "%" + "|%" * num_mutations
         table = _generate_table_name()
         self._database.conn.execute(
-            "CREATE TABLE {} AS "
+            "CREATE TEMP TABLE {} AS "
             "SELECT * "
             "FROM {} "
-            "WHERE NAME LIKE '{}' AND NAME NOT LIKE '{}';".format(table, self._table, like, not_like)
+            "WHERE name LIKE '{}' AND name NOT LIKE '{}';".format(table, self._table, like, not_like)
+        )
+        return Rank(table, self._database)
+
+    def by_wildtype(self):
+        table = _generate_table_name()
+        self._database.conn.execute(
+            "CREATE TEMP TABLE {} AS "
+            "SELECT * "
+            "FROM {} "
+            "WHERE is_wildtype = 1;".format(table, self._table)
         )
         return Rank(table, self._database)
 
@@ -177,7 +188,7 @@ class Rank:
         self._database.conn.executescript(
             "ATTACH DATABASE '{0}' AS exportdb; "
             "DROP TABLE IF EXISTS exportdb.{1}; "
-            "CREATE TABLE exportdb.{1} AS "
+            "CREATE TABLE 'exportdb'.'{1}' AS "
             "SELECT * "
             "FROM {2}; "
             "DETACH DATABASE exportdb;".format(file_name, table_name, self._table)
