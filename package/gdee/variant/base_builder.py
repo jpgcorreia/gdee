@@ -70,9 +70,14 @@ class BaseBuilder:
         except AttributeError:
             pass
 
+        if data.fatal_error:
+            print("Error while processing variant: {}".format(name))
+
+        if not has_eval:
+            print("Error: no evaluations for variant: {}".format(name))
+
         if data.fatal_error or not has_eval:
             self._variants.remove(name)
-            print("Error while processing variant: {}".format(name))
             return
 
         variant_id = self.db.register_variant(self.prot_id, name,
