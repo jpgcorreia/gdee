@@ -62,21 +62,27 @@ class BaseBuilder:
 
         # Sanity check
         has_eval = False
+        all_rejected = True
         try:
             for model in data.modeling.models:
                 if model.evals:
                     has_eval = True
-                    break
+
+                if not model.rejected:
+                    all_rejected = False
         except AttributeError:
             pass
 
         if data.fatal_error:
             print("Error while processing variant: {}".format(name))
 
+        if all_rejected:
+            print("Warning: all models rejected during quality assessment for variant '{}'.".format(name))
+
         if not has_eval:
             print("Error: no evaluations for variant: {}".format(name))
 
-        if data.fatal_error or not has_eval:
+        if data.fatal_error or not has_eval or all_rejected:
             self._variants.remove(name)
             return
 
