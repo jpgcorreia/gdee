@@ -17,4 +17,4 @@ maintainer/dist_build/
 .syntastic_*_config
 
 # Documentation build files
-docs/python/build/
+docs/build/
