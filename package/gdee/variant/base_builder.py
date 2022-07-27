@@ -83,7 +83,6 @@ class BaseBuilder:
             print("Error: no evaluations for variant: {}".format(name))
 
         if data.fatal_error or not has_eval or all_rejected:
-            self._variants.remove(name)
             return
 
         variant_id = self.db.register_variant(self.prot_id, name,
