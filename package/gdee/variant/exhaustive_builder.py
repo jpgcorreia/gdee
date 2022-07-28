@@ -5,7 +5,7 @@
 import itertools
 from .base_builder import BaseBuilder
 from .sequence import Blosum, ResidueIndex
-from gdee.misc import DataContainer
+from gdee.misc import DataContainer, get_valid_filename
 
 
 class CombinatorialMutation:
@@ -110,7 +110,7 @@ class ExhaustiveBuilder(BaseBuilder):
             except StopIteration:
                 return None
 
-        variant_dir = mut_name.replace("|", "_").replace(":", "")
+        variant_dir = get_valid_filename(mut_name.replace("|", "_"))
         variant = self.variant.copy()
         variant.name = mut_name
 

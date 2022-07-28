@@ -2,21 +2,14 @@
 """
 
 
-import re
 import warnings
-from .sequence import ProtSeq
 from .base_builder import BaseBuilder
-from gdee.misc import DataContainer
+from gdee.misc import DataContainer, get_valid_filename
 
 from Bio import SeqIO, Align, BiopythonWarning
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", BiopythonWarning)
     from Bio.Align import substitution_matrices
-
-
-def get_valid_filename(name):
-    name = str(name).strip().replace(' ', '_')
-    return re.sub(r"(?u)[^-\w.]", "", name)
 
 
 class MSABuilder(BaseBuilder):

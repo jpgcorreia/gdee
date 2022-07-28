@@ -1,5 +1,6 @@
 """
 """
+import re
 import json
 import numpy as np
 
@@ -22,3 +23,8 @@ class DataContainer(dict):
 
     def jsonfy(self):
         return json.dumps(self, default=_jsonfy)
+
+
+def get_valid_filename(name):
+    name = str(name).strip().replace(" ", "_")
+    return re.sub(r"(?u)[^-\w.]", "", name)
