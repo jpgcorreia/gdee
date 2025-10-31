@@ -38,6 +38,26 @@ Please report bugs and feature requests through the `Issues page`_.
 Benchmark
 =========
 
+License
+=======
+
+.. |cc-by-nc-sa-shield| image:: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+   :target: http://creativecommons.org/licenses/by-nc-sa/4.0/
+   :alt: CC BY-NC-SA 4.0
+
+.. |cc-by-nc-sa-image| image:: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+   :target: http://creativecommons.org/licenses/by-nc-sa/4.0/
+   :alt: CC BY-NC-SA 4.0
+
+|cc-by-nc-sa-shield|
+
+This work is licensed under a
+`Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License`_.
+
+|cc-by-nc-sa-image|
+
+.. _Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License: http://creativecommons.org/licenses/by-nc-sa/4.0/
+
 .. Footnotes
 .. _LICENSE: https://gdee/blob/master/LICENSE
 .. _release: https://gdee/releases
