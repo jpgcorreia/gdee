@@ -1,6 +1,5 @@
 #!/usr/bin/bash
 
-cd /data/jcorreia/home/dev/gdee/docs
 
 # Remove all build files
 rm -rf build/
