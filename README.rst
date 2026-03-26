@@ -57,7 +57,7 @@ GDEE requires several external dependencies including MODELLER, AutoDock Vina, a
 
 For detailed installation instructions including external program setup, and platform-specific instructions, please see the complete **Installation Guide** in our documentation:
 
- **Installation Documentation**: https://gdee.readthedocs.io/en/latest/installation.html
+ **Installation Documentation**: https://gdee.readthedocs.io/en/latest/Installation.html
 
 How to Use GDEE
 ===============
@@ -124,7 +124,7 @@ Re-evaluate existing docking results with trained metamodel:
 
 For comprehensive tutorials, advanced configuration options, workflow examples, and best practices, please refer to our complete **Usage Documentation**:
 
- **Usage Guide**: https://gdee.readthedocs.io/en/latest/usage.html
+ **Usage Guide**: https://gdee.readthedocs.io/en/latest/Usage.html
 
 
 How Does GDEE Work
@@ -160,9 +160,8 @@ Quick Links
 
  **Complete Documentation**: https://gdee.readthedocs.io/
 
-- `Installation Guide <https://gdee.readthedocs.io/en/latest/installation.html>`_
-- `Usage Tutorials <https://gdee.readthedocs.io/en/latest/usage.html>`_
-- `Configuration Reference <https://gdee.readthedocs.io/en/latest/configuration.html>`_
+- `Installation Guide <https://gdee.readthedocs.io/en/latest/Installation.html>`_
+- `Usage Tutorials <https://gdee.readthedocs.io/en/latest/Usage.html>`_
 
  **Scientific Publication**: https://doi.org/10.1101/2025.09.09.675117
 
