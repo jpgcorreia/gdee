@@ -6,6 +6,7 @@ from gdee.modeling import ModelBuilderFactory, ModelQualityBuilderFactory
 from gdee.evaluator import EvaluatorFactory
 from gdee.measurement import MeasurerFactory
 from path import Path
+from pathlib import Path as PathlibPath
 import tarfile
 import os
 import traceback
@@ -200,6 +201,9 @@ class RescoreFactory:
         self.input_db = None
         self.output_db = None
         self.files_path = None
+        self.use_metamodel = True
+        self.mgltools = "mgltools"
+        self.smina = "smina"
 
     def make(self):
         """Create rescoring pipeline.
@@ -208,10 +212,17 @@ class RescoreFactory:
             RescorePipeline: Configured rescoring pipeline
         """
         pipeline = RescorePipeline()
+        pipeline.input_files = files.InputFiles(self.files_path)
 
-        rescore = Rescore(self.output_db, self.table)
-        rescore.pickle_path = self.pickle_path
-        rescore.path = Path(self.files_path).absolute()
+        rescore = Rescore(
+            self.output_db,
+            self.table,
+            use_metamodel=self.use_metamodel,
+            functions=self.pickle_path,
+            data_dir=PathlibPath(__file__).resolve().parent / "data",
+            mgltools=self.mgltools,
+            smina=self.smina,
+        )
         rescore.get_variants(self.input_db)
 
         pipeline.rescore = rescore
@@ -224,8 +235,16 @@ class RescorePipeline:
         """Initialize rescoring pipeline."""
         self.work_dir = Path().absolute()
         self.rescore = None
+        self.input_files = None
         self._terminate = False
         self._created = False
+
+    def prepare(self):
+        """Prepare rescoring input files and resolve the working directory."""
+        if self.input_files is None:
+            raise RuntimeError("Rescoring input files are not configured")
+        path = self.input_files.prepare()
+        self.rescore.path = Path(str(path)).absolute()
 
     def next_job(self, size):
         """Get next batch of rescoring jobs.
@@ -280,6 +299,8 @@ class RescorePipeline:
         """
         for result in data:
             try:
+                if result.fatal_error:
+                    continue
                 self.rescore.save_results(result)
 
             except Exception as error:
@@ -288,3 +309,5 @@ class RescorePipeline:
     def finalize(self):
         """Finalize pipeline execution."""
         self._terminate = True
+        if self.input_files is not None:
+            self.input_files.cleanup()

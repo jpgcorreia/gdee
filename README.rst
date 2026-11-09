@@ -27,6 +27,7 @@ Features
 
  **Molecular Docking**
 - **AutoDock Vina/Vinardo**: High-throughput protein-ligand docking
+- **Vina GPU backend**: Optional GPU-accelerated docking with a compatible Vina-GPU executable
 - **Multiple ligands**: Parallel evaluation of different compounds
 - **Pose analysis**: Energy ranking and geometric measurements
 
@@ -109,7 +110,7 @@ Re-evaluate existing docking results with trained metamodel:
     ranked_db = Ranked_Database("results.db")
 
     # List of trained scoring function model files
-    scoring_functions = ["scoring_functions.pkl"]
+    scoring_functions = ["metamodel"]
 
     # Perform rescoring on existing results
     rescorer = RescoreVariants(
@@ -117,10 +118,24 @@ Re-evaluate existing docking results with trained metamodel:
         out_db="rescored_results.db",
         table="rescored_poses",
         functions=scoring_functions,
-        files_path="/path/to/structure/files"
+        files_path="/path/to/structure_*.tar",
+        mgltools="/path/to/MGLTools-1.5.7",
+        smina="/path/to/smina"
     )
 
     rescorer.run()
+
+The model weight files are available from the `GDEE Zenodo record
+<https://zenodo.org/records/PLACEHOLDER>`_. For the default source-tree setup,
+downloaded files must be placed in ``package/gdee/data`` with their filenames
+unchanged. If you configure a custom ``data_dir``, place the files there
+instead. Pickle-based models may not load after ODDT or other dependency
+upgrades; if that happens, generate compatible ODDT models using the `ODDT
+documentation <https://oddt.readthedocs.io/>`_.
+
+  Tar input is extracted automatically once per worker rank. With MPI, the tar
+  archive must be readable from every machine; the extracted files are cleaned up
+  when rescoring finishes.
 
 For comprehensive tutorials, advanced configuration options, workflow examples, and best practices, please refer to our complete **Usage Documentation**:
 
@@ -153,7 +168,7 @@ The rescoring feature enables efficient re-evaluation of existing docking poses:
 
 For detailed information about the algorithmic approaches, computational methods, validation studies, and scientific applications of the GDEE platform, please refer to our research publication:
 
- **Scientific Publication**: https://doi.org/10.1101/2025.09.09.675117
+ **Scientific Publication**: https://doi.org/10.1021/acs.jcim.5c02688
 
 Quick Links
 ===========
@@ -163,7 +178,7 @@ Quick Links
 - `Installation Guide <https://gdee.readthedocs.io/en/latest/Installation.html>`_
 - `Usage Tutorials <https://gdee.readthedocs.io/en/latest/Usage.html>`_
 
- **Scientific Publication**: https://doi.org/10.1101/2025.09.09.675117
+ **Scientific Publication**: https://doi.org/10.1021/acs.jcim.5c02688
 
 
 Citing GDEE
@@ -173,13 +188,12 @@ If you use GDEE in your research, please cite:
 
 .. code-block:: bibtex
 
-    @article{souza2025gdee,
+    @article{souza2026gdee,
       title={GDEE: A Structure-Based Platform for Gene Discovery and Enzyme Engineering},
       author={Souza, Caio S and Correia, Jo{\~a}o PG and Rocha, Isabel and Lousa, Diana and Soares, Cl{\'a}udio M},
-      journal={bioRxiv},
-      pages={2025--09},
-      year={2025},
-      publisher={}
+      journal={Journal of Chemical Information and Modeling},
+      year={2026},
+      doi={10.1021/acs.jcim.5c02688}
     }
 
 Contributing

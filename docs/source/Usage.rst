@@ -57,13 +57,9 @@ Configure output file organization and compression:
 **Parameters:**
 
 - **output**: String specifying the base directory name for storing output files
-- **output_format**: Format string for archive file naming (supports Python string formatting)
 - **output_freq**: Integer defining how many completed jobs to include per archive file
 
 External Program Paths
-~~~~~~~~~~~~~~~~~~~~~~
-
-Specify paths to required external software:
 
 .. code-block:: python
 
@@ -71,13 +67,15 @@ Specify paths to required external software:
     eng.programs["mgltools"] = "/path/to/MGLTools-1.5.6"           # MGLTools installation
     eng.programs["vina"] = "/path/to/vina"                         # AutoDock Vina executable
     eng.programs["vinardo"] = "/path/to/smina"                     # Smina with Vinardo scoring (optional)
+    eng.programs["vina_gpu"] = "/path/to/vina-gpu"                 # GPU-enabled Vina executable (optional)
     eng.programs["voromqa"] = "/path/to/voronota-voromqa"          # VoroMQA executable
 
 **Required Programs:**
 
 - **mgltools**: Path to MGLTools installation directory (required for PDBQT conversion)
-- **vina**: Path to AutoDock Vina executable (required for molecular docking)
+- **vina**: Path to AutoDock Vina executable (required when ``name="vina"``)
 - **vinardo**: Path to Smina executable with Vinardo scoring (optional alternative scorer)
+- **vina_gpu**: Path to a GPU-enabled Vina executable that supports the command-line options used by GDEE (optional)
 - **voromqa**: Path to VoroMQA executable (optional for advanced model quality assessment)
 
 Variant Generation Configuration
@@ -176,11 +174,118 @@ Configure protein-ligand docking parameters:
 **Docking Parameters:**
 
 - **name**:
-  - ``"vina"``: Standard AutoDock Vina scoring
-  - ``"vinardo"``: Vinardo scoring function (using Smina)
+    - ``"vina"``: Standard AutoDock Vina scoring
+    - ``"vinardo"``: Vinardo scoring function (using Smina)
+    - ``"vina_gpu"``: GPU-accelerated docking using the configured ``vina_gpu`` executable
 - **exhaustiveness**: Search thoroughness (higher values = more thorough but slower)
 - **box_center**: List of three floats defining the center coordinates of the docking search box
 - **box_size**: List of three floats defining the dimensions of the search box in Angstroms
+
+For GPU docking, install and configure a compatible GPU-enabled Vina executable
+and its required GPU/OpenCL drivers. The current backend requires an OpenCL
+binary path and uses ``gpu_thread`` for the executable's ``--thread`` option.
+``n_gpu`` controls the number of GPU lock slots shared by GDEE worker processes;
+it does not configure the GPU runtime's device enumeration, so verify device
+selection with the GPU executable and your system's OpenCL/CUDA configuration.
+The GPU backend currently uses fixed values for ``--num_modes`` and
+``--energy_range``; ``exhaustiveness`` is not passed to it.
+
+.. code-block:: python
+
+    eng.programs["vina_gpu"] = "/path/to/vina-gpu"
+    eng.evaluator["name"] = "vina_gpu"
+    eng.evaluator["gpu_thread"] = 8000
+    eng.evaluator["opencl_binary_path"] = "/path/to/opencl/binary"
+    eng.evaluator["n_gpu"] = 1
+
+Rescoring Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :class:`~gdee.engineer.RescoreVariants` to apply a scoring function to poses
+that are already stored in a ranked database. The ``functions`` argument selects
+the scorer. It can be a string or a one-item list. The default ``"metamodel"``
+selector combines the bundled RF-Score, PLEC, and Vinardo scores with the
+stacking ensemble. To run one scoring function directly, pass its name instead
+of ``"metamodel"`` and set ``use_metamodel=False`` explicitly.
+
+**Available scoring selectors:**
+
+- ``"metamodel"``: Bundled stacking ensemble using ``rfscore_v1``,
+    ``rfscore_v2``, ``pleclinear``, ``plecrf``, and ``vinardo``.
+- ``"rfscore_v1"``, ``"rfscore_v2"``, ``"rfscore_v3"``: Bundled ODDT
+    RF-Score models.
+- ``"plecnn"``, ``"plecrf"``, ``"pleclinear"``: Bundled PLEC models.
+- ``"nnscore"``: Bundled ODDT NNScore model.
+- ``"vinardo"``: Vinardo score-only rescoring through Smina. This requires a
+    Smina executable and MGLTools for receptor or ligand preparation when needed.
+- A path to a custom ODDT-compatible pickle file: the file is passed directly
+    to ODDT as the scoring function.
+
+Only one direct scoring function can be selected for a run. ``"metamodel"``
+is the only selector that uses several component scores. The input database,
+output database, table name, and structure archive are supplied to
+``RescoreVariants`` as shown below:
+
+.. code-block:: python
+
+    from gdee import RescoreVariants
+
+    rescoring = RescoreVariants(
+        in_db="rank.sqlite3",                 # Existing ranked database
+        out_db="rank_rfscore.sqlite3",        # New database for the result
+        table="AllVariants",                  # Table to read from
+        functions="rfscore_v2",              # Direct scorer, not metamodel
+        files_path="structure_*.tar",        # Structure directory, tar, or glob
+        use_metamodel=False,
+    )
+    rescoring.run()
+
+The same pattern works for every bundled direct scorer. For example, select
+PLECnn, NNScore, or Vinardo as follows:
+
+.. code-block:: python
+
+    # Deep-learning PLEC model
+    rescoring = RescoreVariants(
+        "rank.sqlite3", "rank_plecnn.sqlite3", "AllVariants",
+        functions="plecnn", files_path="structure_*.tar",
+        use_metamodel=False,
+    )
+
+    # NNScore model
+    rescoring = RescoreVariants(
+        "rank.sqlite3", "rank_nnscore.sqlite3", "AllVariants",
+        functions="nnscore", files_path="structure_*.tar",
+        use_metamodel=False,
+    )
+
+    # Vinardo score-only rescoring; smina and MGLTools must be available
+    rescoring = RescoreVariants(
+        "rank.sqlite3", "rank_vinardo.sqlite3", "AllVariants",
+        functions="vinardo", files_path="structure_*.tar",
+        use_metamodel=False,
+        mgltools="/path/to/MGLTools-1.5.7",
+        smina="/path/to/smina",
+    )
+    rescoring.run()
+
+To use a model that is not bundled with GDEE, pass its pickle path instead of
+the selector name:
+
+.. code-block:: python
+
+    rescoring = RescoreVariants(
+        "rank.sqlite3", "rank_custom.sqlite3", "AllVariants",
+        functions="/path/to/my_scoring_model.pickle",
+        files_path="structure_*.tar",
+        use_metamodel=False,
+    )
+    rescoring.run()
+
+When ``functions`` is omitted, the default is the bundled metamodel. Structure
+archives must be readable by every MPI worker when MPI execution is enabled.
+The output table includes a ``scoring_method`` column identifying the selected
+scorer (for custom files, this records the model filename).
 
 Ligand and Measurement Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -498,12 +603,23 @@ After completing initial docking and ranking workflows, you can rescore the cand
 
 .. note::
 
-   Machine learning scoring functions must be trained prior to use. The rescoring workflow requires pre-trained model files in pickle format:
+    All trained model weight files are available from the `GDEE Zenodo record
+    <https://zenodo.org/records/PLACEHOLDER>`_. Custom scoring functions must
+    provide their own ODDT-compatible model file in pickle format:
 
-   - **RF-Score models**: Random Forest-based scoring functions (v1, v2, v3 variants)
-   - **PLECnn model**: Deep learning model using Protein-Ligand Extended Connectivity interaction fingerprints
+    For the default source-tree setup, place downloaded model weight files in
+    ``package/gdee/data`` and keep their filenames unchanged. If you configure
+    a custom ``data_dir``, place the files in that directory instead.
 
-For training these models, refer to the ODDT package documentation.
+    .. warning::
+
+        Pickle model files in the Zenodo record may not load after upgrades to
+        ODDT or other required packages. If a file is incompatible with your
+        installed package versions, generate a new model following the ODDT
+        package documentation.
+
+    For information about training or regenerating ODDT scoring models, refer
+    to the ODDT package documentation.
 
 
 .. code-block:: python
@@ -523,19 +639,19 @@ For training these models, refer to the ODDT package documentation.
         input_db,                                       # Input database with ranked variants
         output_db,                                      # Output database for rescored results
         "AllVariants",                                  # Table name containing variants to rescore
-        [
-            "RFScore_v1_pdbbind2016.pickle",            # path to RF-Score v1 model
-            "RFScore_v2_pdbbind2016.pickle",            # path to RF-Score v2 model
-            "RFScore_v3_pdbbind2016.pickle",            # path to RF-Score v3 model
-            "PLECnn_p5_l1_pdbbind2016_s65536.pickle"    # path to PLECnn deep learning model
-        ],
-        "files"                                         # Directory containing structure files
+        ["metamodel"],                                # bundled stacking ensemble
+        "structure_*.tar",                              # Directory, tar, or tar glob of structure files
+        mgltools="/path/to/MGLTools-1.5.7",
+        smina="/path/to/smina"
     )
 
     # Configure distributed or simple execution for rescoring
     rescoring.platform["name"] = "mpi"
     # Number of CPU cores to use on each MPI node for local parallelism
     rescoring.platform["local_cpu"] = 16
+
+    # With MPI, each worker rank extracts the archive once on its local machine.
+    # The archive path must therefore be readable by every MPI rank.
 
     # Execute rescoring workflow
     print("Running rescore")

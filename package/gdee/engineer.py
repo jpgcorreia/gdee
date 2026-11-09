@@ -67,7 +67,8 @@ class ProteinEngineering:
             "mgltools": "mgltools",
             "vina": "vina",
             "vinardo": "smina",
-            "voromqa": "voronota-voromqa"
+            "voromqa": "voronota-voromqa",
+            "vina_gpu": "vina-gpu"
         }
         self.variant = {
             "name": "mutation",
@@ -94,7 +95,10 @@ class ProteinEngineering:
         self.evaluator = {
             "name": "vina",
             "exhaustiveness": 50,
-            "atom_type": None
+            "atom_type": None,
+            "gpu_thread": 8000,
+            "opencl_binary_path": None,
+            "n_gpu": 0
         }
         self._pipeline = None
         self._terminate = False
@@ -171,15 +175,20 @@ class ProteinEngineering:
 class RescoreVariants:
     """Re-evaluate existing docking results with trained metamodel."""
 
-    def __init__(self, in_db, out_db, table, functions, files_path):
+    def __init__(self, in_db, out_db, table, functions, files_path, use_metamodel=True, mgltools="mgltools", smina="smina"):
         """Initialize rescoring workflow.
 
         Args:
             in_db: Input database path with docking results
             out_db: Output database path for rescored results
             table: Table name for rescored poses
-            functions: Path to pickle file with scoring functions
-            files_path: Path to structure files directory
+            functions: Scoring selector(s). Use a bundled function name like
+                ``rfscore_v2``, ``metamodel`` for the stacking ensemble, or a
+                custom pickle path.
+            files_path: Path to a structure directory or tar archive. Tar
+                archives are extracted automatically per worker.
+            mgltools: MGLTools installation path or command name.
+            smina: Smina executable path or command name.
         """
         self.work_dir = os.getcwd()
         self.db_file = in_db
@@ -188,6 +197,9 @@ class RescoreVariants:
         self.functions = functions
         self.files_path = files_path
         self.platform = {"name": "simple", "local_cpu": 1}
+        self.use_metamodel = use_metamodel
+        self.mgltools = mgltools
+        self.smina = smina
         self._pipeline = None
         self._terminate = False
         signal.signal(signal.SIGUSR1, self.catch_signals)
@@ -206,6 +218,9 @@ class RescoreVariants:
         rescore_factory.input_db = self.db_file
         rescore_factory.output_db = self.out_db
         rescore_factory.files_path = self.files_path
+        rescore_factory.use_metamodel = self.use_metamodel
+        rescore_factory.mgltools = self.mgltools
+        rescore_factory.smina = self.smina
         self._pipeline = rescore_factory.make()
 
         platform_factory = PlatformFactory()

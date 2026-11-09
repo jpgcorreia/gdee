@@ -3,7 +3,22 @@
 from mpi4py import MPI
 import multiprocessing
 from enum import IntEnum, auto
+import socket
+import glob
+import os
 
+def _cleanup_gpu_lock_files(lock_dir="/tmp", lock_prefix="gdee_vina_gpu"):
+    """
+    Best-effort cleanup of GPU lock files for this node.
+    Safe to call only when you know no docking processes are running anymore.
+    """
+    host = socket.gethostname()
+    pattern = os.path.join(lock_dir, f"{lock_prefix}_{host}_*.lock")
+    for p in glob.glob(pattern):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
 
 class RequestType(IntEnum):
     get_task = 0
@@ -29,17 +44,40 @@ class MPIPlatform:
         self.runner = None
 
     def run(self):
+        startup_error = None
+        if self.rank != self.root:
+            try:
+                self.pipeline.prepare()
+            except Exception as error:
+                startup_error = "rank {}: {}".format(self.rank, error)
+
+        startup_errors = self.comm.allgather(startup_error)
+        if any(error is not None for error in startup_errors):
+            if self.rank == self.root:
+                print("MPI rescoring startup failed: {}".format(
+                    "; ".join(error for error in startup_errors if error is not None)
+                ))
+            self.pipeline.finalize()
+            self.comm.Barrier()
+            return
+
         if self.rank == self.root:
             self.manager = MPIManager(self.comm, self.local_cpu, self.pipeline)
             self.manager.run()
 
         else:
             self.runner = MPIRunner(self.comm, self.root, self.local_cpu, self.pipeline)
-            self.runner.run()
+            try:
+                self.runner.run()
+            finally:
+                self.pipeline.finalize()
 
         # Synchronize all runners so we can run again
         self.comm.Barrier()
 
+        # Cleanup once per node (Slurm sets SLURM_LOCALID=0 for the first task on the node)
+        if os.environ.get("SLURM_LOCALID", "0") == "0":
+            _cleanup_gpu_lock_files(lock_dir="/tmp", lock_prefix="gdee_vina_gpu")
 
 class MPIManager:
     def __init__(self, mpi_comm, local_cpu, pipeline):

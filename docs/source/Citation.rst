@@ -10,18 +10,17 @@ Primary Citation
 
 .. code-block:: bibtex
 
-    @article{souza2025gdee,
+      @article{souza2026gdee,
       title={GDEE: A Structure-Based Platform for Gene Discovery and Enzyme Engineering},
       author={Souza, Caio S and Correia, Jo{\~a}o PG and Rocha, Isabel and Lousa, Diana and Soares, Cl{\'a}udio M},
-      journal={bioRxiv},
-      pages={2025--09},
-      year={2025},
-      publisher={Cold Spring Harbor Laboratory}
+         journal={Journal of Chemical Information and Modeling},
+         year={2026},
+         doi={10.1021/acs.jcim.5c02688}
     }
 
 **Text Citation:**
 
-Souza, C. S. (2025). GDEE: A Structure-Based Platform for Gene Discovery and Enzyme Engineering. *bioRxiv*. https://doi.org/10.1101/2025.09.09.675117 
+Souza, C. S., Correia, J. P. G., Rocha, I., Lousa, D., & Soares, C. M. (2026). GDEE: A Structure-Based Platform for Gene Discovery and Enzyme Engineering. *Journal of Chemical Information and Modeling*. https://doi.org/10.1021/acs.jcim.5c02688
 
 Project Acknowledgment
 ----------------------
@@ -43,7 +42,7 @@ GDEE relies on several key computational tools and libraries. If you use GDEE ex
 **MDAnalysis**
    Michaud-Agrawal, N., Denning, E. J., Woolf, T. B. and Beckstein, O. (2011). MDAnalysis: A Toolkit for the Analysis of Molecular Dynamics Simulations. *Journal of Computational Chemistry*, 32, 2319-2327. doi: 10.1002/jcc.21787
 
-**VoroMQA** 
+**VoroMQA**
    Olechnovič, K. and Venclovas, Č. (2017). VoroMQA: Assessment of protein structure quality using interatomic contact areas. *Proteins: Structure, Function, and Bioinformatics*, 85(6), 1131-1145. doi: 10.1002/prot.25278
 
 **NumPy**
@@ -54,4 +53,3 @@ GDEE relies on several key computational tools and libraries. If you use GDEE ex
 
 **Open Drug Discovery Toolkit (ODDT)**
    Wójcikowski M, Zielenkiewicz P, Siedlecki P. Open Drug Discovery Toolkit (ODDT): a new open-source player in the drug discovery field. J Cheminform. 2015 Jun 22;7:26. doi: 10.1186/s13321-015-0078-2. PMID: 26101548; PMCID: PMC4475766.
-  

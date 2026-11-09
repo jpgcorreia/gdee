@@ -510,11 +510,21 @@ class Ranked_Database:
                 "        variant_id INT NOT NULL,"
                 "        eval_id INT NOT NULL,"
                 "        pose_index INT NOT NULL,"
-                "        docking_file TEXT NOT NULL"
+                "        docking_file TEXT NOT NULL,"
+                "        scoring_method TEXT"
                 "    );".format(self.table)
         )
 
-    def register_variant(self, energy, name, directory, wildtype, model_id, variant_id, eval_id, pose_index, docking_file):
+            columns = {
+                row[1]
+                for row in self.conn.execute("PRAGMA table_info({})".format(self.table))
+            }
+            if "scoring_method" not in columns:
+                self.conn.execute(
+                    "ALTER TABLE {} ADD COLUMN scoring_method TEXT".format(self.table)
+                )
+
+    def register_variant(self, energy, name, directory, wildtype, model_id, variant_id, eval_id, pose_index, docking_file, scoring_method=None):
         conn = self.conn
         cursor = conn.execute(
             "INSERT INTO"
@@ -527,10 +537,22 @@ class Ranked_Database:
             "        variant_id,"
             "        eval_id,"
             "        pose_index,"
-            "        docking_file"
+            "        docking_file,"
+            "        scoring_method"
             "    ) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);".format(self.table),
-            (energy, name, directory, bool(wildtype), model_id, variant_id, eval_id, pose_index, docking_file)
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);".format(self.table),
+            (
+                energy,
+                name,
+                directory,
+                bool(wildtype),
+                model_id,
+                variant_id,
+                eval_id,
+                pose_index,
+                docking_file,
+                scoring_method,
+            ),
         )
         conn.commit()
 

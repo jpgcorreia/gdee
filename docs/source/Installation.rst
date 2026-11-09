@@ -77,7 +77,7 @@ MGLTools Installation
 
 MGLTools is required for converting PDB files to PDBQT format for docking.
 
-**Installation:** Please follow the official MGLTools installation guide at https://ccsb.scripps.edu/mgltools/downloads/ 
+**Installation:** Please follow the official MGLTools installation guide at https://ccsb.scripps.edu/mgltools/downloads/
 
 **Configuration in GDEE:**
 
@@ -99,6 +99,29 @@ AutoDock Vina is required for molecular docking calculations.
 
     # In your GDEE script, specify the Vina executable path
     eng.programs["vina"] = "/path/to/vina"
+
+Vina GPU Installation (Optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+GPU docking is optional and is only needed when selecting GDEE's ``vina_gpu``
+backend. Install a GPU-enabled Vina executable that supports the command-line
+options used by GDEE, together with the GPU drivers and OpenCL runtime required
+by that executable. Follow the installation instructions for the specific
+Vina-GPU implementation and your GPU hardware; these components are not
+installed by the GDEE Python package.
+
+GDEE also requires a valid OpenCL binary path for the GPU executable. Configure
+the executable and GPU docking options in your workflow:
+
+.. code-block:: python
+
+    eng.programs["vina_gpu"] = "/path/to/vina-gpu"
+    eng.evaluator["name"] = "vina_gpu"
+    eng.evaluator["gpu_thread"] = 8000
+    eng.evaluator["opencl_binary_path"] = "/path/to/opencl/binary"
+    eng.evaluator["n_gpu"] = 1
+
+See the :doc:`Usage` guide for GPU backend behavior and configuration details.
 
 Vinardo Installation (Optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

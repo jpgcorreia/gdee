@@ -33,6 +33,7 @@ We appreciate acknowledgment of GDEE's contribution to your research and welcome
 Version History
 ---------------
 
+- **v1.1.0** (2026): Added ML metamodel rescoring with bundled model weights, Vinardo score-only rescoring, automatic single and multi-tar input extraction, and coordinated MPI worker startup handling
 - **v1.0.0** (2025): Initial release with core functionality for protein engineering workflows and rescoring with ML-based scoring function
 
 .. note::

@@ -9,8 +9,8 @@
 # MAJOR.MINOR.BUGFIX-rc2
 #
 
-VERSION="1.0.0"
-SHORT="1.0"
+VERSION="1.1.0"
+SHORT="1.1"
 
 sed -i 's/[0-9]\+\.[0-9]\+\.[0-9]\+\(-dev\|-rc[0-9]*\)\?/'$VERSION'/' ../package/gdee/__init__.py
 

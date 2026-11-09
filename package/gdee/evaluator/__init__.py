@@ -2,7 +2,7 @@
 """
 
 
-from .vina import VinaDocking, VinardoDocking
+from .vina import VinaDocking, VinardoDocking, VinaGPUDocking
 
 
 __all__ = ["EvaluatorFactory"]
@@ -27,6 +27,9 @@ class EvaluatorFactory:
 
         elif name == "vinardo":
             return VinardoDocking(self.parameters)
+
+        elif name == "vina_gpu":
+            return VinaGPUDocking(self.parameters)
 
         else:
             raise RuntimeError("Evaluator '{}' does not exists.".format(name))
