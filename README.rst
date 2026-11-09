@@ -126,7 +126,7 @@ Re-evaluate existing docking results with trained metamodel:
     rescorer.run()
 
 The model weight files are available from the `GDEE Zenodo record
-<https://zenodo.org/records/PLACEHOLDER>`_. For the default source-tree setup,
+<https://doi.org/10.5281/zenodo.24081565>`_. For the default source-tree setup,
 downloaded files must be placed in ``package/gdee/data`` with their filenames
 unchanged. If you configure a custom ``data_dir``, place the files there
 instead. Pickle-based models may not load after ODDT or other dependency

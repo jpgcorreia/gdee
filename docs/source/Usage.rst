@@ -604,7 +604,7 @@ After completing initial docking and ranking workflows, you can rescore the cand
 .. note::
 
     All trained model weight files are available from the `GDEE Zenodo record
-    <https://zenodo.org/records/PLACEHOLDER>`_. Custom scoring functions must
+    <https://doi.org/10.5281/zenodo.24081565>`_. Custom scoring functions must
     provide their own ODDT-compatible model file in pickle format:
 
     For the default source-tree setup, place downloaded model weight files in
