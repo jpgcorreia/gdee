@@ -47,19 +47,36 @@ class MPIPlatform:
         startup_error = None
         if self.rank != self.root:
             try:
-                self.pipeline.prepare()
+                prepare = getattr(self.pipeline, "prepare", None)
+                if callable(prepare):
+                    prepare()
             except Exception as error:
                 startup_error = "rank {}: {}".format(self.rank, error)
 
         startup_errors = self.comm.allgather(startup_error)
         if any(error is not None for error in startup_errors):
-            if self.rank == self.root:
-                print("MPI rescoring startup failed: {}".format(
-                    "; ".join(error for error in startup_errors if error is not None)
-                ))
-            self.pipeline.finalize()
+            finalize_error = None
+            try:
+                self.pipeline.finalize()
+            except Exception as error:
+                finalize_error = "rank {} finalize: {}".format(self.rank, error)
+
+            finalize_errors = self.comm.allgather(finalize_error)
+
+            lock_cleanup_error = None
+            if os.environ.get("SLURM_LOCALID", "0") == "0":
+                try:
+                    _cleanup_gpu_lock_files(lock_dir="/tmp", lock_prefix="gdee_vina_gpu")
+                except Exception as error:
+                    lock_cleanup_error = "rank {} GPU lock cleanup: {}".format(self.rank, error)
+
+            lock_cleanup_errors = self.comm.allgather(lock_cleanup_error)
             self.comm.Barrier()
-            return
+
+            errors = [error for error in startup_errors if error is not None]
+            errors.extend(error for error in finalize_errors if error is not None)
+            errors.extend(error for error in lock_cleanup_errors if error is not None)
+            raise RuntimeError("MPI worker startup failed: {}".format("; ".join(errors)))
 
         if self.rank == self.root:
             self.manager = MPIManager(self.comm, self.local_cpu, self.pipeline)

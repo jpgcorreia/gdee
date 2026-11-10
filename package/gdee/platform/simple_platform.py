@@ -18,8 +18,11 @@ class SimplePlatform:
         self.pipeline = pipeline
 
     def run(self):
-        self.pipeline.prepare()
         try:
+            prepare = getattr(self.pipeline, "prepare", None)
+            if callable(prepare):
+                prepare()
+
             job_data = self.pipeline.next_job(1)
 
             while job_data:
@@ -27,5 +30,7 @@ class SimplePlatform:
                 self.pipeline.save_results(results)
                 job_data = self.pipeline.next_job(1)
         finally:
-            self.pipeline.finalize()
-            _cleanup_gpu_lock_files(lock_dir="/tmp", lock_prefix="gdee_vina_gpu")
+            try:
+                self.pipeline.finalize()
+            finally:
+                _cleanup_gpu_lock_files(lock_dir="/tmp", lock_prefix="gdee_vina_gpu")
